@@ -1,0 +1,663 @@
+--- PAGE 1 ---
+LAND DEAL
+OFFER RUBRIC
+Deal Structuring Framework for Field Agents
+CONFIDENTIAL  ·  INTERNAL USE ONLY
+01
+Tier Framework
+02
+The Trend Graph
+03
+Tier Range Chart
+04
+Cost Awareness
+05
+All Deal Examples
+This rubric teaches you how to structure land deals — fast. Find your deal size, check the numbers, pick your exit. The
+bigger the deal, the more flexibility you have on price.
+01
+DEAL TIER FRAMEWORK
+MICRO
+MV Under $30K
+40% – 70%
+Costs eat margin most
+Need extra spread room
+SMALL
+$30K – $75K
+50% – 75%
+Standard zone + buffer
+Watch net closely
+STANDARD
+$75K – $300K
+50% – 80%
+Core zone — flexible
+Most deals live here
+LARGE
+$300K+
+50% – 90%
+$ spread absorbs costs
+Room to push higher
+How to read these cards:
+Step 1 — Find the card matching your deal's sell price (market value).
+Step 2 — The % range tells you the most you should offer the seller.
+Example: $100K sell price, Standard tier → offer anywhere from 50% up to 80% of MV.
+The standard 50–70% zone is your everyday starting point.
+As deal size grows, you gain more flexibility — all the way to 90% on large exits.
+Why Micro Deals Demand Lower Offers — And It Is Not Optional
+When you are working a micro deal — a parcel with a market value under $30,000 — you are operating in a
+mathematically unforgiving environment. The numbers are not just tight; they are actively working against you
+unless you structure the offer correctly. Here is what is happening under the hood, and why the 40% floor on micro
+deals is not pessimism — it is just arithmetic.
+The Two-Cost Problem: One Scales, One Does Not
+
+
+--- PAGE 2 ---
+Every land deal carries two categories of transaction cost: realtor commission and closing costs. The critical thing to
+understand is that these two costs behave completely differently as deal size changes — and that difference is the
+entire reason the offer range expands as you move up the tiers.
+Realtor commission is percentage-based. On a $20,000 sale at 8%, that is $1,600. On a $500,000 sale at 4.5%,
+that is $22,500. The dollar amount grows with the deal, but the commission always stays proportional — it never
+punishes small deals disproportionately. That part is fair.
+Closing costs are a flat fee. Whether you close on a $20,000 parcel or a $500,000 farm, the title company, the
+attorney, the recording fees, and the administrative costs still add up to roughly $3,000 to $4,500. That number
+barely moves regardless of deal size. On a $20,000 deal, that flat $3,500 represents 17.5% of your entire sale price
+— before you have even touched the realtor commission. Add 8% commission ($1,600) and you have already
+given up $5,100, or about 25% of the sale, before a single dollar reaches your pocket.
+What This Means for Your Offer
+On that same $20,000 deal, if you offered 70% of market value — which sounds reasonable and even conservative
+by standard rubric thinking — you would have paid $14,000 to acquire the property. After costs of $5,100, you walk
+away with roughly $900. That is not a business. That is a lot of work and risk for less than a thousand dollars. To
+make a meaningful net profit on a micro deal — say $4,000 to $6,000 — you need to buy at 50% to 60% of market
+value, sometimes lower. The 40% floor on the tier card exists for exactly this reason: it is the minimum cushion
+required for costs to not destroy the deal.
+Now compare that to a $400,000 deal. Closing costs are roughly $5,500 — which is only 1.4% of the sale price.
+Realtor commission at 4.5% is $18,000. Total costs: about $23,500, or under 6% of the deal. Even if you offered
+88% of market value, you are still walking away with over $20,000 net. The math works because the fixed cost
+problem disappears at scale. Closing costs that would have consumed 17% of a micro deal are now a rounding
+error.
+The Unknown Costs Factor
+There is a third variable that makes micro deals even more demanding: unexpected costs. A survey discrepancy, a
+title issue, a small lien, a boundary encroachment — these things happen, and they cost money to resolve. On a
+large deal where your margin is $40,000 or more, a $2,000 surprise is manageable. On a micro deal where your
+entire net is $4,500, that same $2,000 surprise wipes out nearly half your profit. This is why micro deals require
+discipline. You are not being cheap with the seller — you are building in the buffer that the math demands. Every
+percentage point you give away on a small deal costs you far more, proportionally, than it would on a large one.
+02
+THE OFFER TREND GRAPH
+
+
+--- PAGE 3 ---
+The Two Equations Behind the Chart
+Line 1 (Blue) — Maximum Offer %:
+ f(x) = 92.0 - 55.0 x e^( -0.00161 x x^0.620 )
+Line 2 (Teal) — MV post Realtor / CC:
+ g(x) = ( 1 - realtor_rate ) x 100 - ( 2,500 / x ) x 100
+ Realtor rate: 8% on MV up to $65K | 7% up to $100K | 6% up to $150K | 5% up to $250K | 4% above $250K | CC = $2,500 flat
+ The GREEN SHADED GAP between Line 2 and Line 1 = your Net Profit % at max offer
+ Variable
+ Value
+ What it means
+ L (ceiling)
+ 92.0%
+ The hard ceiling — the curve approaches but never exceeds this, no matter the deal size
+ B (range)
+ 55.0
+ Total rise from the theoretical floor to the ceiling
+ k (scale)
+ 0.00161
+ Controls how quickly the curve rises — works together with the shape exponent n
+ n (shape)
+ 0.620
+ The key parameter — n < 1 creates the steep early rise that flattens out at scale
+ MV
+ $20K
+ $40K
+ $60K
+ $100K
+ $150K
+ $200K
+ $350K
+ $500K
+ $750K
+ $1M
+ Max Offer %
+ 64.0%
+ 75.9%
+ 80.9%
+ 85.0%
+ 86.5%
+ 88.0%
+ 90.6%
+ 91.4%
+ 91.9%
+ 92.2%
+ Post Realtor/CC %
+ 79.5%
+ 85.8%
+ 87.8%
+ 90.5%
+ 92.3%
+ 93.8%
+ 95.3%
+ 95.5%
+ 95.7%
+ 95.8%
+
+
+--- PAGE 4 ---
+Net Profit $
+ $3,100
+ $3,959
+ $4,160
+ $5,500
+ $8,750
+ $11,500
+ $16,400
+ $20,500
+ $28,404
+ $35,500
+Net Profit $ = what you walk away with at the maximum offer price after realtor commission and closing costs. Real deals often come in
+below the max offer, meaning actual profit is higher than shown here.
+What the two lines are showing you:
+BLUE LINE: Maximum Offer % — the most you would pay as a % of market value.
+TEAL LINE: MV post Realtor/CC — what you net from the sell side after commission and $2,500 CC.
+GREEN ZONE (gap between the lines): Your net profit at the maximum offer price.
+  The gap starts wide on small deals (high % but small dollars) and grows in $ terms at scale.
+  On a $100K deal at max offer: gap = 5.5% = $5,500 net.
+  On a $500K deal at max offer: gap = 4.1% = $20,500 net.
+Bottom line: the blue line is your ceiling. Every dollar below it on your offer = more profit.
+03
+OFFER RANGE BY TIER
+What this chart is showing you:
+Each bar is a deal size tier. The bar shows the LOW and HIGH end of your offer range.
+MICRO deals start at 40% — costs are proportionally largest here, so you need more room.
+SMALL deals: 50–75%. Standard zone plus a little extra as the numbers get cleaner.
+STANDARD deals: 50–80%. Most deals live here. Flexible range, core rubric applies.
+LARGE deals: 50–85%. Same 50% floor — but you can push much higher when the $ spread holds.
+SUBDIVIDE: 50–90%. Big exit value strategy — price off what the split land is worth, not the raw parcel.
+
+
+--- PAGE 5 ---
+04
+COST AWARENESS — KNOW WHAT YOU GIVE UP
+!
+COST AWARENESS — KNOW WHAT YOU ARE GIVING UP
+ Realtor Commission:
+8% on <$60K  ·  6.5% up to $100K  ·  5.5% up to $160K  ·  4.5% on $350K+
+ Closing Costs:
+$3,200–$5,800 flat — hits small deals HARDEST, same dollars whether $20K or $500K sale
+ Key Rule:
+Under $30K MV: costs eat 20–25%+ of sale price — always run the cost math before offering
+The table below shows the full money breakdown on real deal sizes. Red columns = money you pay out. Green
+columns = money you keep. The '% Spread Kept' column tells you what fraction of your gross profit you actually take
+home after costs.
+BUY PRICE
+SELL PRICE
+REALTOR FEE
+CLOSING COST
+TOTAL COSTS
+NET PROFIT
+% SPREAD
+KEPT
+$12,000
+$20,000
+$1,600
+$3,200
+$4,800
+$3,200
+40%
+$16,000
+$25,000
+$2,000
+$3,200
+$5,200
+$3,800
+42%
+$19,000
+$27,000
+$2,160
+$3,200
+$5,360
+$2,640
+33%
+$22,000
+$44,000
+$3,520
+$3,800
+$7,320
+$14,680
+67%
+$70,000
+$100,000
+$6,500
+$3,800
+$10,300
+$19,700
+66%
+$127,000
+$150,000
+$8,250
+$4,500
+$12,750
+$10,250
+45%
+$215,000
+$250,000
+$12,500
+$5,000
+$17,500
+$17,500
+50%
+$355,000
+$400,000
+$18,000
+$5,800
+$23,800
+$21,200
+47%
+$425,000
+$500,000
+$22,500
+$5,800
+$28,300
+$46,700
+62%
+Notice how on a $20K deal, costs swallow nearly half the spread. On a $500K deal, costs are a small fraction. Same dollars — very different
+impact.
+05
+ALL REAL DEAL EXAMPLES
+Every deal below is real. Red columns show what went out (realtor + closing). Green shows what came back (net
+profit and % of spread kept). Study the TIGHT deals — high % is fine when the numbers work, but always verify the
+green columns before committing.
+BUY
+SELL
+% MV
+REALTOR $
+CLOSING $
+NET PROFIT
+% SPREAD
+KEPT
+TIER
+VERDICT
+$11,000
+$20,000
+55%
+$1,600
+$3,200
+$4,200
+47%
+Micro
+STRONG
+$12,000
+$20,000
+60%
+$1,600
+$3,200
+$3,200
+40%
+Micro
+SOLID
+$15,000
+$25,000
+60%
+$2,000
+$3,200
+$4,800
+48%
+Micro
+SOLID
+$17,000
+$26,000
+65%
+$2,080
+$3,200
+$3,720
+41%
+Micro
+SOLID
+$23,000
+$32,000
+72%
+$2,560
+$3,200
+$3,240
+36%
+Micro
+TIGHT
+$22,000
+$44,000
+50%
+$3,520
+$3,800
+$14,680
+67%
+Small
+STRONG
+$70,000
+$100,000
+70%
+$6,500
+$3,800
+$19,700
+66%
+Standard
+SOLID
+$73,000
+$100,000
+73%
+$6,500
+$3,800
+$16,700
+62%
+Standard
+SOLID
+
+
+--- PAGE 6 ---
+$76,000
+$100,000
+76%
+$6,500
+$3,800
+$13,700
+57%
+Standard
+PUSHING
+$95,000
+$120,000
+79%
+$6,600
+$4,500
+$13,900
+56%
+Standard
+PUSHING
+$127,000
+$150,000
+85%
+$8,250
+$4,500
+$10,250
+45%
+Standard
+PUSHING
+$130,000
+$150,000
+87%
+$8,250
+$4,500
+$7,250
+36%
+Standard
+TIGHT
+$145,000
+$175,000
+83%
+$8,750
+$4,500
+$16,750
+56%
+Standard
+SOLID
+$215,000
+$250,000
+86%
+$12,500
+$5,000
+$17,500
+50%
+Large
+SOLID
+$220,000
+$250,000
+88%
+$12,500
+$5,000
+$12,500
+42%
+Large
+SOLID
+$240,000
+$275,000
+87%
+$13,750
+$5,000
+$16,250
+46%
+Large
+SOLID
+$285,000
+$325,000
+88%
+$16,250
+$5,000
+$18,750
+47%
+Large
+SOLID
+$355,000
+$400,000
+89%
+$18,000
+$5,800
+$21,200
+47%
+Large
+SOLID
+$425,000
+$500,000
+85%
+$22,500
+$5,800
+$46,700
+62%
+Large
+STRONG
+■ STRONG — clean margin,
+easy yes
+■ SOLID — good deal, do it
+■ PUSHING — high % but net
+holds
+■ TIGHT — wholesale only or
+walk
+This rubric is a guide — not a guarantee. Every deal has variables: competition, seller motivation, market timing. Use your judgment. When
+it's borderline, wait for a better one.
+06
+KNOW YOUR POSITION: TIME AS A TOOL
+The First Question Is Not the Price — It Is the Competition
+
+
+--- PAGE 7 ---
+Before you decide how to structure an offer, before you even think about the number, you need to answer
+one question: is anyone else in this deal? That single piece of information changes everything — not just the
+price, but the entire strategy, the timing, and how much risk you are taking on. Skipping this step is one of the
+most expensive mistakes a field agent can make.
+When Time Is Your Friend — No Competition Detected
+If you have done your homework and there is no other buyer in the picture, time stops being a threat and
+becomes your single most powerful tool. Here is what actually happens when there is no competition: you
+make your offer — a real, specific, meaningful number like $20,000 or $80,000 or $150,000 — and then you
+go quiet. You do not follow up the next day. You do not lower the number. You do not pressure. You let the
+number sit.
+And here is the psychology of why this works. That number — whatever it is — is very likely the largest
+single dollar amount anyone has ever offered this person for that piece of land. It starts replaying in their
+head. They tell their spouse. They think about what they could do with it. They start doing the math on what
+their life looks like with that money in it. Every day that passes without another offer is a day that your
+number gets bigger in their mind, not smaller. You are not being ignored — you are letting compounding
+psychology do the work for you. This is why patience in a no-competition environment is not just acceptable
+— it is the correct play.
+When Time Is Not Your Friend — Competition Changes Everything
+Now flip the scenario. Another buyer is in the picture — or you have reason to believe one might be. This
+changes the entire equation immediately. The problem with competition is not just that someone else might
+win the deal. The problem is that you cannot see what they are offering. You do not know if they are at $500
+less than you, or $5,000 less, or $5,000 more. You do not know if they are a cash buyer who can close in two
+weeks, or if they are stringing the seller along. You cannot gauge their timeline, their intent, or their number.
+And that means any strategy built on waiting becomes a coin flip — and coin flips are not a business model.
+When competition is real, the decision framework narrows fast. You either have conviction in your number
+and you move — cash close, clean terms, fast timeline — or you assess that the deal does not make sense
+at a competitive price and you walk. What you do not do is wait and hope. Hoping is not a strategy. A deal
+lost to a competitor who offered $500 more is still a lost deal, and you will never know it was that close. Move
+with information or move on.
+How to Gauge Competition — Ask Without Asking
+The most important skill here is not negotiation — it is information gathering. You need to know if there is
+competition, and you need to find out in a way that does not tip your hand or make the seller feel
+interrogated. The approach is casual, almost indifferent. Something like: "I know you're looking to sell this,
+but honestly, you're not really moving on any of the offers you're getting, are you?" — said lightly, like you
+already know the answer and are just making conversation.
+
+
+--- PAGE 8 ---
+That kind of question does two things at once. It implies you are relaxed and not desperate — which is
+exactly the posture you want. And it opens a door for the seller to either confirm that no one is really biting
+(your green light to be patient) or to reveal that someone else is actually close (your signal to decide fast).
+The specific words and the conversation around this will be covered in detail by Yousef — but the underlying
+principle is this: gathering information before committing to a strategy is not optional. It is the job. Know your
+position first. Then decide how to play it.
+07
+THE CONTINGENCY FRAMEWORK — NEVER PAY OUT OF POCKET
+The Non-Negotiable Foundation of Every Deal
+There is one principle that sits underneath every deal structure in this business, and it is not optional. You do
+not pay for anything out of pocket unless a closing is already guaranteed and money is already coming in on
+the other end. Not the property. Not the perk test. Not the survey. Not a single dollar leaves your account
+speculatively. Every cost gets structured so that it either falls on the seller, gets reimbursed at the closing
+table, or simply does not happen if the deal does not close. This is not negotiation style — it is how the
+business is built.
+The Property Itself Is Contingent
+
+
+--- PAGE 9 ---
+The clearest example of this principle is the deal itself. On a wholesale or double close, you do not purchase
+the property and then hope to find a buyer. That sequence — buy first, sell second — is backwards and
+exposes you to real financial risk. The correct sequence is: get the property under contract, find a buyer who
+commits, then close. In a double close, you buy and sell on the same day, often using the buyer's funds to
+fund your side of the purchase. You have never carried the property. You have never been exposed. The
+whole deal is contingent on having someone on the other end before you commit to the first end.
+If you cannot find a buyer, you do not close. The property stays with the seller — it is still their land, and they
+have lost nothing except time. This is important to understand as a framing tool as well: when sellers push
+back on your terms, you can honestly tell them that if this does not work out, their land is exactly where it
+was, still theirs, still on the market. You are not taking anything from them by walking away.
+Perk Tests — Structured So the Risk Stays With the Land
+A perk test — short for percolation test — determines whether a piece of land can support a septic system,
+which is often a prerequisite for development or resale value. The test costs money, and the outcome is not
+guaranteed. This creates a simple problem: if you pay for the test and it fails, you have spent money on a
+deal that no longer makes sense, and the seller still owns the land. That is a loss with no upside.
+The solution is to negotiate the perk test as a contingency cost. There are two clean approaches. Option A:
+the seller pays for the test upfront, since it is still their property and the results benefit them regardless of
+whether the deal closes — they learn something real about their land. Option B: you pay for it, but with a
+written agreement that the cost is reimbursed to you at the closing table. If the deal does not close, you
+absorb it — which is why Option A is preferred. Either way, you are framing this correctly to the seller: "This
+test tells you more about your own property. If it passes, great — we close and you get reimbursed or I cover
+it. If it fails, at least you know, and it cost you a test instead of a bad deal." That framing is honest and it
+usually lands.
+Surveys — Pay at the Closing Table, Not Before
+Surveys follow the same logic. A survey is often required to confirm boundaries, identify encroachments, or
+satisfy a buyer's due diligence. It has real value, but that value only materializes if the deal closes. The goal
+is to find surveyors who understand your business model and are willing to get paid at the closing table
+rather than upfront. These relationships exist, and building them is part of running this operation correctly. A
+surveyor who works with investors and understands the contingency model is a long-term asset.
+If the deal falls through, have an honest conversation with the surveyor. Most professionals who work in this
+space understand that closings are not guaranteed. The key is to set that expectation at the start of the
+relationship, not after the fact. And again — the framing for the seller is the same: this survey benefits them.
+If the deal does not close, they now have a current survey on their property. That is not nothing.
+The Verbal Agreement Comes First — Then It Goes in Writing
+
+
+--- PAGE 10 ---
+Every one of these contingencies starts as a conversation. You negotiate verbally — casually,
+matter-of-factly, like this is just how things are done, because it is. Once the seller agrees, it goes into the
+agreement in writing. Your standard contract has a format; these contingency terms get added on top of that.
+The written agreement protects everyone and removes ambiguity at the closing table. Nothing about this
+framework is adversarial — it is just clean business. You are not asking the seller to take on your risk. You
+are asking them to acknowledge the shared reality that nothing is guaranteed until it closes, and structuring
+the deal so that reality is reflected in who pays for what and when.
+08
+LEAD STAGE FRAMEWORK
+ STAGE
+ THRESHOLD
+ CADENCE
+ HOT
+ ≤ 50% of MV
+ Immediate
+ WARM
+ 50% → Max Offer $
+ Active pursuit
+ REJECTED — CLOSE
+ Max Offer → +10%
+ Monthly
+ REJECTED — FAR A
+ +10% → +15% above Max
+ Quarterly
+ REJECTED — FAR B
+ +15% → +20% above Max
+ Every 6 months
+ ARCHIVE — AT MARKET
+ 95% – 105% of MV
+ Every 6 months
+ ARCHIVE — OVER MARKET
+ 105% – 115% of MV
+ Annually
+ DEAD LEAD
+ 115%+ of MV
+ Never
+STAGE 1 — HOT
+Seller is asking at or below 50% of market value. This is the deal the entire system is built to find. Move immediately
+— do not wait, do not overthink it. Your margin is clean, your costs are covered, and there is real money on the
+table. The relationship here is straightforward: be professional, be responsive, and be easy to work with. Sellers in
+this bucket are motivated and ready. Your job is not to negotiate — it is to execute cleanly and not give them a
+reason to second-guess you. Speed and reliability close Hot deals. Hesitation loses them.
+STAGE 2 — WARM
+Seller is asking above 50% of MV but at or below your maximum offer dollar amount. The math works but the margin
+is thinner than you want. Your goal here is to negotiate down toward 50% while knowing you have a real ceiling to
+protect you. Relationship matters here — the more trust and rapport you have built, the more likely they are to move
+on price. People do not discount for strangers. If they like you, trust you, and believe you will actually close, they will
+give you more room than they would give a faceless offer. Push toward your target, stay warm, and never make
+them feel pressured. Pressure kills Warm deals.
+STAGE 3 — REJECTED — CLOSE
+
+
+--- PAGE 11 ---
+Seller is asking between your maximum offer dollar amount and 10% above it. You cannot make money at their
+number today, but the gap is small and closable. This is your most valuable follow-up bucket — treat it that way.
+Touch them once a month, but not to reopen a hard negotiation. Keep it casual and relational. Check in, ask how
+things are going, stay present in their life. Your number is already in their head and every month that passes without
+another serious buyer makes it sound better. The relationship is the strategy here — you are not pushing, you are
+staying warm while time does the work. If after three monthly touches they have not moved at all, evaluate dropping
+them to Far A.
+STAGE 4 — REJECTED — FAR A
+Seller is asking between 10% and 15% above your maximum offer. The gap is real but not permanent — one shift in
+their circumstances and they could be back in Warm territory overnight. A failed retail listing, a tax bill, a family
+situation, financial pressure — any one of these can move a Far A seller fast when it happens. Follow up every three
+months and keep the tone light and relational. You are not calling to renegotiate, you are calling to stay in their life.
+Ask how the property is going, whether they have had any interest, how things are on their end. Plant the seed
+without pressure. When the moment comes, you want to be the first call they make.
+STAGE 5 — REJECTED — FAR B
+Seller is asking between 15% and 20% above your maximum offer. The gap here cannot close on a single life event
+alone — it needs multiple things to go wrong before their expectation becomes realistic. You are not actively
+pursuing this deal, you are maintaining a long-term presence at minimal cost. Follow up every six months. Keep it
+brief and genuinely human — not a sales call, just a check-in. The relationship you are building here is a slow burn.
+Some of these sellers will never move. A few of them will eventually hit a wall and remember that you were the one
+who kept showing up without pressure. That is what you are investing in. Do not spend real energy here — just stay
+visible.
+STAGE 6 — ARCHIVE — AT MARKET
+Seller is asking between 95% and 105% of market value. They want what any retail buyer would pay them and there
+is no room for your business model at that price. This is not a negotiation problem — it is a psychology problem.
+They do not yet believe they need to discount. The most likely path to a deal here is a failed retail listing — they try
+the MLS, it sits, buyers push back on price, and eventually reality sets in. Follow up every six months. Keep the tone
+warm and completely pressure-free. You are not trying to change their mind today. You are staying in their
+peripheral vision so that when retail fails — and for motivated sellers it often does — your name is still there.
+STAGE 7 — ARCHIVE — OVER MARKET
+Seller is asking between 105% and 115% of market value. Their expectation is detached from reality and closing
+that gap takes time and usually a painful process of failed retail attempts. There is nothing you can say in a
+conversation today that will move them — they need the market to tell them what you already know. Follow up once
+a year. Keep it short and friendly. The relationship here is one of pure patience — you are not a priority to them and
+they should not be one to you. Never argue about price or try to convince them they are wrong. That kills the
+relationship permanently. Stay cordial, stay light, and let time do the work.
+
+
+--- PAGE 12 ---
+STAGE 8 — DEAD LEAD
+Seller is asking above 115% of market value. There is no realistic path to a deal here under any normal
+circumstances. The gap between their expectation and market reality — let alone your offer — is too large for any
+reasonable timeframe. Do not follow up on a schedule. Remove them from your active mental bandwidth entirely. If
+they reach out to you, take the call — life circumstances occasionally make the impossible possible — but you
+initiate nothing. Your follow-up time and energy are finite. Every minute spent here is a minute taken from a Hot,
+Warm, or Rejected Close lead that actually has a path to closing.

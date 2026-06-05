@@ -1,0 +1,809 @@
+--- PAGE 1 ---
+DewClaw Land Holdings
+Pricing Dashboard
+Technical Specification & Formula Reference
+This document contains the complete technical specification for the
+DewClaw land acquisition pricing dashboard, including all mathematical
+formulas, scoring curves, section logic, and implementation details.
+A developer should be able to reconstruct the full interface from this document alone.
+CONTENTS
+01  Dashboard Architecture & Layout
+02  Section: Seller Signals
+03  Section: Owner Proximity
+04  Section: Valuation Score (Dual)
+05  Section: Acreage Intel & Survey Flag
+06  Section: Proximity / Lot Type
+07  Section: Input MV
+08  Section: Price Pulse / Subdivide Curve
+09  Section: Market Anchor
+10  Section: Counter Craft
+11  Formula Quick-Reference
+12  Data Sources
+
+
+--- PAGE 2 ---
+SECTION 01
+Dashboard Architecture & Layout
+The dashboard uses a two-column responsive layout. The left column (ratio 5) contains all data input and signal
+cards. The right column (ratio 7) contains the chart, market math, and the counter craft AI tool. All sections are
+cards with a consistent visual style: light background, thin border, uppercase section header, and row-based
+data display.
+Column Structure
+grid-template-columns: 5fr 7fr;   /* CSS grid — left:right ratio */
+Left Column — Top to Bottom
+ Orde
+ r
+ Section Name
+ Purpose
+ 1
+Seller Signals
+Tax status, back taxes, family transfer, ownership length
+ 2
+Owner Proximity
+In/out of state and county flags
+ 3
+Valuation Score
+Dual score: assessed value + market land value vs. MV
+ 4
+Acreage Intel
+Deeded vs. LandInsight calc, survey flag
+ 5
+Proximity
+Lot type selector with description and tags
+ 6
+Input MV
+User-entered market value comp — drives all derived math
+Right Column — Top to Bottom
+ Orde
+ r
+ Section Name
+ Purpose
+ 1
+Price Pulse / Subdivide
+Curve
+Power curve chart, subdivide classification, split preview cards
+ 2
+Market Anchor
+MV display, offer range, max offer formula, estimated profit
+ 3
+Counter Craft
+AI-powered negotiation response generator
+Property Header
+A persistent header sits above both columns and contains: property address, county/state, APN, deeded
+acreage, and three dynamic status chips (tax delinquent, owner county status, ownership length).
+
+
+--- PAGE 3 ---
+Design Tokens
+The interface uses CSS custom properties (variables) for all colors so it adapts to light/dark themes
+automatically. Never hardcode hex values — always reference tokens.
+ Token
+ Usage
+--color-background-primary
+Card backgrounds
+--color-background-secondary
+Stat boxes, input areas, code blocks
+--color-border-tertiary
+Card borders, row dividers
+--color-text-primary
+Main values and figures
+--color-text-secondary
+Labels and secondary text
+--color-text-tertiary
+Section headers, hints
+--color-background-success / danger /
+warning / info
+Chip and badge backgrounds
+--color-text-success / danger / warning
+/ info
+Chip and badge text
+--border-radius-lg / md
+Card and element rounding
+
+
+--- PAGE 4 ---
+SECTION 02
+Seller Signals
+This section surfaces the most important motivation indicators for the seller. All fields are pulled from county
+records or data providers. The section displays as a list of label/value rows inside a card.
+Fields
+ Field
+ Data Type
+ Display Logic
+ Source
+Tax delinquent
+Boolean
+Red chip 'Yes' / green chip 'No'
+County records
+Back taxes
+Dollar amount
+Plain dollar value; highlight if > $0
+County records
+Annual property tax
+Dollar / yr
+Plain display
+County records
+Family transfer
+Boolean
+Yellow chip 'Yes' if detected
+Deed records
+Length of ownership
+Years (integer)
+Plain number + 'years'
+Deed records
+Chip Color Logic
+  Tax delinquent = Yes → Red chip (danger). This is the single strongest seller motivation signal.
+  Family transfer = Yes → Yellow chip (warning). Indicates inherited or intra-family deed, often a sign of
+motivated or uninvested sellers.
+  Ownership > 20 years → consider surfacing as a neutral chip; long ownership often means emotional
+detachment from current market prices.
+Developer note: 'Family transfer' is typically detected when grantor and grantee share a surname on the deed, or when the
+transfer price is $0 or $1.
+
+
+--- PAGE 5 ---
+SECTION 03
+Owner Proximity
+Compares the mailing address of the current deed holder against the property location. Out-of-area owners are
+significantly more likely to sell at a discount because they have less emotional attachment and often carry the
+burden of managing property remotely.
+Fields & Logic
+ Field
+ Condition
+ Chip
+ Color
+State
+Owner state == property state
+In-state (TX)
+Green
+State
+Owner state != property state
+Out of state
+Red
+County
+Owner county == property county
+In-county
+Green
+County
+Owner county != property county
+Out of county
+Yellow
+Owner location
+Always display
+City, ST ZIP (plain text)
+N/A
+Out of state is a harder flag than out of county. An out-of-state owner with back taxes is one of the highest-motivation seller
+profiles in the dataset.
+
+
+--- PAGE 6 ---
+SECTION 04
+Valuation Score — Dual Rating System
+This section produces two independent scores (0–10) for two separate LandInsight-provided values: the county
+Assessed Value and the LandInsight Market Land Value. Each is scored by comparing it to the user-entered
+MV comp as a percentage. The ideal ratio is 50% — where the county/market value is exactly half of the
+operator's comp — giving maximum negotiation leverage.
+Inputs
+  MV (Market Value) — entered by the operator in the Input MV block. This is the operator's own comp, not
+pulled from any data source.
+  Assessed Value — pulled from LandInsight (county assessor figure).
+  Market Land Value — pulled from LandInsight (their proprietary land value estimate).
+Scoring Formula — Piecewise Linear Interpolation
+The score is calculated using an asymmetric bell curve, defined by anchor points. Given a percentage ratio
+(value / MV * 100), the score is linearly interpolated between the two nearest anchor points.
+ratio = (assessed_value / MV) * 100 /* or market_land_value / MV * 100 */
+score = piecewise_linear_interpolation(ratio, ANCHOR_POINTS)
+Anchor Points Table
+These are the exact calibration points. The curve rises from the left, peaks at 50%, then drops more steeply on the right side
+— reflecting that a high county value is worse than a low one (less negotiation room).
+ Ratio (% of MV)
+ Score (/10)
+ Interpretation
+ 0%
+ 0.0
+No value data
+ 15%
+ 1.0
+Floor — very low, hard to justify to seller
+ 25%
+ 2.5
+Low — some negotiation room but credibility concern
+ 30%
+ 4.5
+Below typical — good leverage
+ 50%
+ 10.0
+PEAK — perfect, maximum leverage (offer range = 50-70% of MV)
+ 70%
+ 6.5
+Slightly above ideal — still workable
+ 80%
+ 4.0
+High — reduced negotiation room
+ 90%
+ 1.0
+Very high — county already values near market
+
+
+--- PAGE 7 ---
+Ratio (% of MV)
+ Score (/10)
+ Interpretation
+ 100%+
+ 0.0
+At or above MV — no spread to work with
+Implementation (JavaScript)
+const SCORE_ANCHORS = [
+  [0, 0], [15, 1], [25, 2.5], [30, 4.5], [50, 10],
+  [70, 6.5], [80, 4], [90, 1], [100, 0], [115, 0]
+];
+function interpScore(pct) {
+  if (pct <= 0 || pct >= 115) return 0;
+  for (let i = 0; i < SCORE_ANCHORS.length - 1; i++) {
+    const [x0, y0] = SCORE_ANCHORS[i];
+    const [x1, y1] = SCORE_ANCHORS[i + 1];
+    if (pct >= x0 && pct <= x1) {
+      return y0 + (pct - x0) / (x1 - x0) * (y1 - y0);
+    }
+  }
+  return 0;
+}
+Score Color Thresholds
+ Score Range
+ Color Token
+ Meaning
+ 8.0 – 10.0
+success (green)
+Strong leverage — ideal acquisition target
+ 6.0 – 7.9
+info (blue)
+Good — workable spread
+ 4.0 – 5.9
+warning (yellow)
+Fair — proceed with awareness
+ 0.0 – 3.9
+danger (red)
+Weak — difficult to build a case
+Display Layout
+The Valuation Score card shows two rows — one for Assessed Value, one for Market Land Value. Each row
+contains: a score ring (circle badge, color-coded), an editable dollar input for the LandInsight figure, the
+calculated percentage of MV, and a one-line verdict text. Both rows update instantly when MV or either
+LandInsight value changes.
+The score ring shows one decimal place (e.g. '7.3'). The verdict text is a short human-readable interpretation from the table
+below.
+
+
+--- PAGE 8 ---
+Ratio Range
+ Verdict Text
+ < 15%
+Very low — hard to justify to seller
+ 15–35%
+Below typical — good negotiation room
+ 35–50%
+Approaching sweet spot
+ = 50%
+Perfect — maximum negotiation leverage
+ 50–65%
+Slightly above ideal — still workable
+ 65–80%
+High — reduced negotiation room
+ > 80%
+Very high — little spread to work with
+
+
+--- PAGE 9 ---
+SECTION 05
+Acreage Intel & Survey Flag System
+Compares the deeded acreage from the deed/title against the calculated acreage from LandInsight's GIS
+measurement. When discrepancy exceeds a size-adjusted threshold, the system flags the parcel as needing a
+survey. The threshold is not flat — it uses a power curve that decays with parcel size, because small absolute
+gaps matter more on small parcels.
+Survey Flag Threshold Formula
+The maximum acceptable variance (as a percentage) is defined by a power curve fitted to the operator's
+calibration data:
+threshold_pct(acres) = 54 * acres^(-0.376)
+min_acceptable_ac = deeded_acres * (1 - threshold_pct / 100)
+Formula Derivation — Calibration Points
+This curve was fitted to the following operator-provided anchor points using least-squares regression on a
+power model (y = A * x^B):
+ Deeded Acres
+ Flag Below (ac)
+ Variance %
+ Implied A·x^B
+ 5 ac
+ 3.5 ac
+ 30%
+ 54 * 5^(-0.376) = 30.1%
+ 10 ac
+ 8.0 ac
+ 20%
+ 54 * 10^(-0.376) = 20.5%
+ 25 ac
+ 21.0 ac
+ 16%
+ 54 * 25^(-0.376) = 15.3%
+ 50 ac
+ 44.0 ac
+ 12%
+ 54 * 50^(-0.376) = 11.7%
+ 200 ac
+ 185.0 ac
+ 7.5%
+ 54 * 200^(-0.376) = 7.5%
+Flag Logic — Three Levels
+ Condition
+ Level
+ Display
+ Color
+LI_calc >= min_ac * 1.15
+Normal
+No flag — show variance % only
+None
+min_ac <= LI_calc < min_ac * 1.15
+Watch zone
+■ Within 15% of threshold — note it
+Yellow
+LI_calc < min_ac
+Hard flag
+■ Survey recommended — exceeds
+threshold
+Red
+Implementation (JavaScript)
+
+
+--- PAGE 10 ---
+const A = 54, B = -0.376;
+function surveyThresholdPct(deededAcres) {
+  return A * Math.pow(deededAcres, B);  // % variance allowed
+}
+function minAcceptableAcres(deededAcres) {
+  const t = surveyThresholdPct(deededAcres);
+  return deededAcres * (1 - t / 100);
+}
+function surveyFlag(deededAcres, liCalcAcres) {
+  const minAc = minAcceptableAcres(deededAcres);
+  if (liCalcAcres < minAc)          return 'flag';
+  if (liCalcAcres < minAc * 1.15)   return 'watch';
+  return 'normal';
+}
+Negotiation Use
+A survey flag is a negotiation lever. When triggered, the interface suggests asking: 'When was the last time you
+had this property surveyed?' A significant discrepancy opens a conversation about adjusting the offer
+downward to reflect the actual measured acreage, or making the deal contingent on a survey.
+
+
+--- PAGE 11 ---
+SECTION 06
+Proximity — Lot Type Classification
+A dropdown selector that classifies the subject parcel into one of eleven land proximity categories. Each
+selection renders a short description and a set of color-coded attribute tags. This context informs offer strategy,
+development potential, and resale approach.
+Lot Type Reference
+ Value Key
+ Display Name
+ Tags
+ Color
+infill
+Infill lot
+Urban · Platted · Utilities at street · Ready to
+build
+Green
+corner
+Corner lot
+Urban · Dual frontage · Check setbacks
+Green
+flag
+Flag lot
+Tricky access · Flagpole strip · Finance risk
+Yellow
+outlot
+Outlot
+Unbuildable · Platted reserve · Check purpose
+Red
+suburban_infill
+Suburban infill
+Near city · Utilities likely · Low friction
+Green
+suburban_fringe
+Suburban fringe tract
+ETJ territory · Path of growth · Utilities nearby
+Blue
+peri_urban
+Peri-urban tract
+5-20 mi from city · Transitional · Mixed use
+nearby
+Blue
+exurban
+Exurban tract
+20-50 mi out · Large lot residential · Commuter
+zone
+Grey
+rural_residential
+Rural residential tract
+Far out · Large lot homes · Hold for value
+Grey
+agricultural
+Agricultural tract
+Soil value · Water rights · Crop potential
+Yellow
+rural_recreationa
+l
+Rural recreational tract
+Timber/hunting · Lifestyle value · No dev
+horizon
+Red
+
+
+--- PAGE 12 ---
+SECTION 07
+Input MV — Operator Market Value Entry
+The Input MV block is the single source of truth for all pricing math in the dashboard. The operator enters their
+own market value comp here — derived from comparable sales research, LandInsight data, and judgment. This
+is NOT the LandInsight market land value; it is the operator's independent valuation.
+  MV drives: Offer Range · Max Offer · Est. Profit · Valuation Score · Price/Acre
+Cascading Updates
+Every downstream calculation recalculates in real time on every keystroke using an oninput event listener. The
+update chain is:
+  1. MV changes
+  2. updateAll(mv) fires
+  3. Market value display, price/acre, offer range (50-70%) recalculate
+  4. Max offer f(MV) recalculates
+  5. Net proceeds g(MV) recalculates
+  6. Estimated profit = net proceeds - max offer recalculates
+  7. Valuation score rings for AV and MLV recalculate (ratio = value / new MV)
+Implementation
+document.getElementById('mv-input').addEventListener('input', function() {
+  updateAll(parseFloat(this.value) || 0);
+});
+
+
+--- PAGE 13 ---
+SECTION 08
+Price Pulse & Subdivide Curve
+This is the primary chart section in the right column. It shows a power-law price-per-acre curve for the county
+market, marks the subject parcel on that curve, and classifies the county as Subdividable, Semi-subdividable,
+or Non-subdividable based on the curve's exponent. A split preview shows what happens to $/ac if the parcel is
+divided into 2, 3, 4, or 5 lots.
+The Power Curve Formula
+Each county market is described by a formula of the form:
+price_per_acre(acres) = COEFF * acres^EXPONENT
+The operator selects the appropriate formula for the county being analyzed. The formula is calibrated from
+comparable sales data. The current working formula is:
+price_per_acre(acres) = 18,781 * acres^(-0.58)
+Full Formula Library
+The following formulas have been calibrated for various markets. The operator selects which one applies to the
+current county:
+ Formula
+ Exponent
+ Classification
+ Notes
+10,776 * ac^(-0.37)
+ -0.37
+Non-subdividable
+Below -0.35 threshold
+18,781 * ac^(-0.58)
+ -0.58
+Subdividable
+Working formula; strong split upside
+16,400 * ac^(-0.41)
+ -0.41
+Subdividable
+Just above threshold
+39,274 * ac^(-0.73)
+ -0.73
+Subdividable
+Very high split upside
+24,680 * ac^(-0.40)
+ -0.40
+Semi-subdividable
+Exactly at boundary
+38,765 * ac^(-0.63)
+ -0.63
+Subdividable
+Strong market
+9,247 * ac^(-0.31)
+ -0.31
+Non-subdividable
+Weak split; low value density
+13,700 * ac^(-0.33)
+ -0.33
+Non-subdividable
+Below -0.35 threshold
+17,574 * ac^(-0.33)
+ -0.33
+Non-subdividable
+Below -0.35 threshold
+37,850 * ac^(-0.51)
+ -0.51
+Subdividable
+Good split market
+39,648 * ac^(-0.79)
+ -0.79
+Subdividable
+Strongest split upside in library
+
+
+--- PAGE 14 ---
+Formula
+ Exponent
+ Classification
+ Notes
+21,780 * ac^(-0.56)
+ -0.56
+Subdividable
+Good market
+Subdivide Classification Thresholds
+Classification is based entirely on the absolute value of the exponent:
+ Exponent Range
+ Classification
+ Banner Color
+ Meaning
+ 0 to -0.35
+Non-subdividable
+Red
+Curve too flat — splitting rarely doubles $/ac
+ -0.35 to -0.40
+Semi-subdividable
+Yellow
+Marginal — may work for 2-3 lot splits only
+ -0.40 and below
+Subdividable
+Green
+Curve steep enough to double $/ac on 3-5 lot
+split
+The Double-Your-Money Threshold
+The core test is whether splitting the parcel can double the price per acre. The 2x line on the chart is drawn at
+double the subject parcel's current $/ac. Any split scenario whose resulting lot $/ac lands above this line is a
+viable double-your-money split.
+subject_ppa = COEFF * subject_acres^EXPONENT
+double_line = subject_ppa * 2
+split_lot_ppa = COEFF * (subject_acres / n_lots)^EXPONENT
+multiplier = split_lot_ppa / subject_ppa
+Split Preview Cards
+Four cards are generated for 2-lot, 3-lot, 4-lot, and 5-lot splits. Each card shows the lot size (acres each), the
+resulting $/ac from the curve formula, and the multiplier vs. the whole parcel. Cards with multiplier >= 2.0 are
+highlighted green.
+function buildSplits(subjectAcres, coeff, exp) {
+  const basePPA = coeff * Math.pow(subjectAcres, exp);
+  [2, 3, 4, 5].forEach(n => {
+    const lotAc  = subjectAcres / n;
+    const lotPPA = coeff * Math.pow(lotAc, exp);
+    const mult   = lotPPA / basePPA;
+    // render card — highlight green if mult >= 2.0
+  });
+}
+
+
+--- PAGE 15 ---
+Chart Implementation
+The chart uses Chart.js (v4.4.1). It renders three datasets on a single line chart:
+  Dataset 1 — $/ac curve: Line chart from 1 to 120 acres, Y = COEFF * x^EXP. Purple line with fill.
+  Dataset 2 — 2x threshold line: Horizontal dashed green line at subject_ppa * 2.
+  Dataset 3 — Subject parcel dot: Single point plotted at (subject_acres, subject_ppa). Red/coral dot, no
+line.
+// Chart.js dataset config snippet
+datasets: [
+  { data: curveYs, borderColor: '#534AB7', fill: true, pointRadius: 0 },
+  { data: xs.map(() => doublePPA), borderDash: [6,4], borderColor: '#1D9E75' },
+  { data: xs.map((x,i) => i===subjectIdx ? subjectPPA : null),
+    borderColor: '#D85A30', showLine: false, pointRadius: 7 }
+]
+
+
+--- PAGE 16 ---
+SECTION 09
+Market Anchor — Pricing Math
+Four stat boxes arranged in a 2x2 grid below the chart. All values derive from the operator's MV input. The
+realtor rate is also editable inline.
+Box 1 — Market Value (MV) with Price Per Acre
+market_value = MV (operator input — no formula)
+price_per_acre = MV / deeded_acres
+Price per acre displays smaller, to the right of the MV figure, inside the same box.
+Box 2 — Offer Range (50–70%)
+offer_low = MV * 0.50
+offer_high = MV * 0.70
+Displays as a range: '$84,000 – $117,600'. This is the operator's working offer window.
+Box 3 — Max Offer f(MV)
+The absolute maximum offer, calculated using an exponential saturation formula. As MV grows, the percentage
+of MV that can be offered grows toward an asymptote (never reaching 92%). The output is a percentage;
+multiply by MV to get a dollar figure.
+f(MV) = 92.0 - 55.0 * e^( -0.00161 * MV^0.620 )
+max_offer_pct = f(MV)
+max_offer_dollar = MV * (max_offer_pct / 100)
+Example at MV = $168,000:
+  f(168000) = 92.0 - 55.0 * e^(-0.00161 * 168000^0.620)
+   = 92.0 - 55.0 * e^(-0.00161 * 1617.3)
+   = 92.0 - 55.0 * e^(-2.604)
+   = 92.0 - 55.0 * 0.0739
+   = 92.0 - 4.06 = 87.94% of MV
+  max_offer = $168,000 * 0.8794 = $147,745
+Box 4 — Estimated Profit g(MV)
+
+
+--- PAGE 17 ---
+Net proceeds after realtor fees and closing costs, minus the max offer. The g(MV) formula returns net proceeds
+as a percentage of MV, accounting for a variable realtor rate and a fixed closing cost assumption of $2,500.
+g(MV) = (1 - realtor_rate) * 100 - (2,500 / MV) * 100
+net_proceeds = MV * (g(MV) / 100)
+estimated_profit = net_proceeds - max_offer_dollar
+Example at MV = $168,000, realtor_rate = 3% (0.03):
+  g(168000) = (1 - 0.03) * 100 - (2500 / 168000) * 100
+   = 97.0 - 1.488 = 95.51% of MV
+  net_proceeds = $168,000 * 0.9551 = $160,457
+  estimated_profit = $160,457 - $147,745 = $12,712
+The realtor rate input defaults to 3% (land deals typically have one side only) but is editable by the operator. Changing it
+updates the profit figure in real time.
+Implementation (JavaScript)
+function fOffer(mv) {
+  return 92.0 - 55.0 * Math.exp(-0.00161 * Math.pow(mv, 0.620));
+}
+function gNet(mv, realtorRatePct) {
+  return (1 - realtorRatePct / 100) * 100 - (2500 / mv) * 100;
+}
+function calcProfit(mv, realtorRatePct) {
+  const maxOffer    = mv * (fOffer(mv) / 100);
+  const netProceeds = mv * (gNet(mv, realtorRatePct) / 100);
+  return netProceeds - maxOffer;   // target: ~$10,000-$15,000
+}
+
+
+--- PAGE 18 ---
+SECTION 10
+Counter Craft — AI Negotiation Tool
+A textarea where the operator types a brief negotiation point or context note. On clicking 'Generate counter', the
+input is combined with the parcel's known context (tax delinquency, ownership length, acreage discrepancy,
+subdivide status) and sent to the Claude API to generate a tailored negotiation script.
+Prompt Construction
+The prompt passed to the API should include all available parcel signals as context so the AI can generate a
+specific, relevant response rather than a generic one. Structure:
+const prompt = `
+  You are helping a land acquisition specialist craft a
+  negotiation counter. Here is the parcel context:
+  - Tax delinquent: ${taxDelinquent}
+  - Back taxes: ${backTaxes}
+  - Ownership length: ${ownershipYears} years
+  - Family transfer: ${familyTransfer}
+  - Owner proximity: ${ownerProximity}
+  - Acreage discrepancy: ${discrepancyPct}%
+  - Survey flag: ${surveyFlag}
+  - County subdivide status: ${subdivideStatus}
+  - Market value (op comp): $${mv}
+  - Max offer: $${maxOffer}
+  Operator's negotiation point: ${operatorInput}
+  Write a confident, empathetic negotiation script the
+  operator can use verbatim or adapt. Reference specific
+  signals above. Keep it conversational, not salesy.
+`
+API Call
+const response = await fetch('https://api.anthropic.com/v1/messages', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 1000,
+
+
+--- PAGE 19 ---
+    messages: [{ role: 'user', content: prompt }]
+  })
+});
+const data = await response.json();
+const reply = data.content[0].text;
+Key Negotiation Levers to Reference
+  Back taxes — a ticking clock, the strongest lever. Frame as empathy, not pressure.
+  Acreage discrepancy — raises uncertainty without accusation; opens survey conversation.
+  Out-of-state / out-of-county — validates the operator's value prop (clean close, no hassle).
+  Length of ownership — signals possible emotional detachment from current market realities.
+  Family transfer — heirs are often less invested; emphasize simplicity and speed.
+  Subdivide potential — NOT shared with seller; internal use only for offer strategy.
+
+
+--- PAGE 20 ---
+SECTION 11
+Formula Quick Reference
+ Formula Name
+ Expression
+ Output
+Power curve (subdivide)
+COEFF * acres^EXP
+$/acre for a given lot size
+Working curve
+18,781 * acres^(-0.58)
+$/acre — Taylor County
+Valuation score
+piecewise_linear(value/MV * 100,
+ANCHORS)
+Score 0-10
+Survey threshold
+54 * acres^(-0.376)
+Max acceptable variance %
+Min acceptable acres
+deeded * (1 - threshold_pct/100)
+Acres (flag below this)
+Offer range low
+MV * 0.50
+Dollar offer (low end)
+Offer range high
+MV * 0.70
+Dollar offer (high end)
+Max offer f(MV)
+92.0 - 55.0 * e^(-0.00161 * MV^0.620)
+% of MV (multiply by MV)
+Net proceeds g(MV)
+(1 - rate) * 100 - (2500/MV) * 100
+% of MV after fees
+Estimated profit
+(g(MV)/100 * MV) - (f(MV)/100 * MV)
+Dollar profit estimate
+Price per acre
+MV / deeded_acres
+$/acre (operator comp)
+Split multiplier
+crv(acres/n) / crv(acres)
+x times current $/ac after n-lot split
+Double line
+crv(subject_acres) * 2
+$/ac target for 2x return
+Subdivide Classification Boundary Summary
+ Exponent
+ Class
+ Example Formula
+ 0 to -0.349
+Non-subdividable
+9,247 * ac^(-0.31)
+ -0.35 to -0.399
+Semi-subdividable
+24,680 * ac^(-0.40)
+ -0.40 and below
+Subdividable
+18,781 * ac^(-0.58)
+
+
+--- PAGE 21 ---
+SECTION 12
+Data Sources
+ Field
+ Source
+ Notes
+Assessed value
+LandInsight
+County assessor figure pulled via LandInsight API or
+export
+Market land value
+LandInsight
+LandInsight's proprietary AVM estimate for land-only value
+LandInsight calc acreage
+LandInsight
+GIS-measured polygon area, distinct from deed
+description
+Deeded acreage
+Deed / county records
+From the recorded deed or county parcel record
+APN
+County records
+Assessor Parcel Number
+Tax delinquency
+County treasurer
+May be surfaced via LandInsight or direct county lookup
+Back taxes amount
+County treasurer
+Total outstanding tax liability including penalties
+Annual property tax
+County records
+Most recent annual tax bill
+Family transfer flag
+Deed records
+Detected from $0/$1 sale or surname match on deed
+Length of ownership
+Deed records
+Current year minus year of last arm's-length sale
+Owner mailing address
+County records /
+LandInsight
+Used for in/out of state and county proximity flags
+Market value (MV)
+Operator entry
+Operator's own comp — NOT from any data provider
+ DewClaw Land Holdings — Pricing Dashboard Specification v1.0
+ Confidential — Internal Use Only
