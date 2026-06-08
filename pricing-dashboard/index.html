@@ -1,2214 +1,1050 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>DewClaw Pricing Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-    <script src="./reference/subdivide_county_formulas.js"></script>
-    <style>
-      :root {
-        color-scheme: light;
-        --bg: #f9f1df;
-        --panel: rgba(255, 255, 255, 0.88);
-        --panel-soft: rgba(255, 255, 255, 0.72);
-        --ink: #17202a;
-        --muted: #5d6972;
-        --line: rgba(23, 32, 42, 0.08);
-        --line-strong: rgba(23, 32, 42, 0.16);
-        --border: rgba(23, 32, 42, 0.12);
-        --accent: #ff7a59;
-        --green: #2a9d8f;
-        --green-soft: rgba(42, 157, 143, 0.14);
-        --blue: #0c7b93;
-        --blue-soft: rgba(12, 123, 147, 0.12);
-        --yellow: #a66b16;
-        --yellow-soft: rgba(255, 188, 109, 0.22);
-        --red: #a63c06;
-        --red-soft: rgba(255, 122, 89, 0.16);
-        --purple: #32404d;
-        --purple-soft: rgba(23, 32, 42, 0.06);
-        --coral: #ff7a59;
-        --gray-chip: rgba(23, 32, 42, 0.06);
-        --shadow: 0 22px 55px rgba(23, 32, 42, 0.12);
-        --radius: 24px;
-        --inner-radius: 20px;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      html,
-      body {
-        min-height: 100%;
-      }
-
-      body {
-        margin: 0;
-        background:
-          radial-gradient(circle at top left, rgba(255, 188, 109, 0.35), transparent 38%),
-          radial-gradient(circle at right 15%, rgba(12, 123, 147, 0.22), transparent 28%),
-          linear-gradient(180deg, #f9f1df 0%, #f5efe6 42%, #eef4f6 100%);
-        color: var(--ink);
-        font-family:
-          "Trebuchet MS", "Gill Sans", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
-      }
-
-      button,
-      input,
-      select,
-      textarea {
-        font: inherit;
-      }
-
-      button {
-        cursor: pointer;
-      }
-
-      .app {
-        width: min(1240px, 100%);
-        margin: 0 auto;
-        padding: 32px 20px 56px;
-      }
-
-      .topbar {
-        position: relative;
-        top: auto;
-        z-index: 10;
-        display: grid;
-        grid-template-columns: minmax(260px, 1fr) auto;
-        gap: 20px;
-        align-items: flex-start;
-        margin-bottom: 24px;
-        padding: 32px;
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        backdrop-filter: blur(18px);
-      }
-
-      .property-title {
-        display: grid;
-        gap: 8px;
-        min-width: 0;
-      }
-
-      .eyebrow {
-        margin: 0;
-        color: var(--accent);
-        font-size: 0.82rem;
-        font-weight: 700;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-      }
-
-      .property-title h1 {
-        margin: 8px 0 4px;
-        font-family: Georgia, "Times New Roman", serif;
-        font-size: clamp(2.1rem, 4vw, 3.2rem);
-        font-weight: 700;
-        line-height: 1.15;
-        letter-spacing: -0.03em;
-      }
-
-      .meta-strip,
-      .chip-strip {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        align-items: center;
-      }
-
-      .location-picker {
-        display: grid;
-        grid-template-columns: minmax(150px, 0.58fr) minmax(190px, 0.82fr);
-        gap: 10px;
-        max-width: 580px;
-        margin-top: 4px;
-      }
-
-      .location-field {
-        display: grid;
-        gap: 5px;
-      }
-
-      .location-field span {
-        color: var(--muted);
-        font-size: 0.74rem;
-        font-weight: 800;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-      }
-
-      .meta-item,
-      .chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        min-height: 28px;
-        padding: 5px 9px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        background: rgba(23, 32, 42, 0.06);
-        color: #3d4854;
-        font-size: 0.86rem;
-        white-space: nowrap;
-      }
-
-      .chip {
-        color: var(--ink);
-        font-weight: 700;
-      }
-
-      .chip.green,
-      .tone-green {
-        background: var(--green-soft);
-        border-color: color-mix(in srgb, var(--green) 35%, var(--line));
-        color: var(--green);
-      }
-
-      .chip.blue,
-      .tone-blue {
-        background: var(--blue-soft);
-        border-color: color-mix(in srgb, var(--blue) 32%, var(--line));
-        color: var(--blue);
-      }
-
-      .chip.yellow,
-      .tone-yellow {
-        background: var(--yellow-soft);
-        border-color: color-mix(in srgb, var(--yellow) 32%, var(--line));
-        color: var(--yellow);
-      }
-
-      .chip.red,
-      .tone-red {
-        background: var(--red-soft);
-        border-color: color-mix(in srgb, var(--red) 32%, var(--line));
-        color: var(--red);
-      }
-
-      .chip.gray,
-      .tone-gray {
-        background: var(--gray-chip);
-        border-color: var(--line);
-        color: #3d4854;
-      }
-
-      .dashboard-grid {
-        display: grid;
-        grid-template-columns: 5fr 7fr;
-        gap: 18px;
-        align-items: start;
-      }
-
-      .column {
-        display: grid;
-        gap: 14px;
-      }
-
-      .card {
-        background: rgba(255, 255, 255, 0.94);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        overflow: hidden;
-        backdrop-filter: blur(18px);
-      }
-
-      .card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 16px 18px;
-        border-bottom: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.78);
-      }
-
-      .section-title {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        min-width: 0;
-        margin: 0;
-        color: var(--accent);
-        font-size: 0.82rem;
-        font-weight: 700;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-      }
-
-      .section-title svg,
-      button svg {
-        width: 16px;
-        height: 16px;
-        flex: 0 0 auto;
-      }
-
-      .card-body {
-        padding: 16px 18px 18px;
-      }
-
-      .rows {
-        display: grid;
-        border: 1px solid var(--line);
-        border-radius: var(--inner-radius);
-        overflow: hidden;
-        background: rgba(255, 255, 255, 0.86);
-      }
-
-      .row {
-        display: grid;
-        grid-template-columns: minmax(130px, 0.92fr) minmax(0, 1fr);
-        min-height: 42px;
-        border-top: 1px solid var(--line);
-      }
-
-      .row:first-child {
-        border-top: 0;
-      }
-
-      .label {
-        display: flex;
-        align-items: center;
-        padding: 9px 11px;
-        background: rgba(23, 32, 42, 0.045);
-        color: #34404b;
-        font-size: 0.8rem;
-        font-weight: 750;
-      }
-
-      .value {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 8px;
-        min-width: 0;
-        padding: 7px 10px;
-        text-align: right;
-        font-size: 0.9rem;
-        color: var(--ink);
-        font-weight: 700;
-      }
-
-      input,
-      select,
-      textarea {
-        width: 100%;
-        min-width: 0;
-        border: 1px solid var(--line-strong);
-        border-radius: 16px;
-        background: #ffffff;
-        color: var(--ink);
-        outline: 0;
-      }
-
-      input,
-      select {
-        min-height: 42px;
-        padding: 10px 12px;
-      }
-
-      input::placeholder,
-      textarea::placeholder {
-        color: #7b8793;
-      }
-
-      input:focus,
-      select:focus,
-      textarea:focus {
-        border-color: var(--blue);
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 18%, transparent);
-      }
-
-      .money-input {
-        position: relative;
-        width: min(180px, 100%);
-      }
-
-      .money-input::before {
-        content: "$";
-        position: absolute;
-        left: 9px;
-        top: 50%;
-        color: #46525e;
-        transform: translateY(-50%);
-        pointer-events: none;
-      }
-
-      .money-input input {
-        padding-left: 22px;
-        text-align: right;
-      }
-
-      .number-input {
-        width: min(160px, 100%);
-      }
-
-      .number-input input {
-        text-align: right;
-      }
-
-      .input-with-suffix {
-        display: grid;
-        grid-template-columns: minmax(80px, 1fr) auto;
-        gap: 6px;
-        align-items: center;
-      }
-
-      .suffix {
-        color: var(--muted);
-        font-size: 0.8rem;
-      }
-
-      .score-list {
-        display: grid;
-        gap: 10px;
-      }
-
-      .score-row {
-        display: grid;
-        grid-template-columns: 66px minmax(150px, 1fr) minmax(86px, auto) minmax(150px, 1.3fr);
-        gap: 10px;
-        align-items: center;
-        min-width: 0;
-        padding: 10px;
-        border: 1px solid var(--line);
-        border-radius: var(--inner-radius);
-        background: rgba(255, 255, 255, 0.9);
-      }
-
-      .score-ring {
-        --ring: var(--red);
-        display: grid;
-        place-items: center;
-        width: 54px;
-        height: 54px;
-        border-radius: 999px;
-        background:
-          radial-gradient(circle, var(--panel) 52%, transparent 53%),
-          conic-gradient(var(--ring) calc(var(--score, 0) * 10%), var(--line) 0);
-        color: var(--ring);
-        font-weight: 900;
-        font-size: 1rem;
-      }
-
-      .score-meta {
-        display: grid;
-        gap: 4px;
-        min-width: 0;
-      }
-
-      .score-name {
-        font-weight: 800;
-      }
-
-      .score-source {
-        color: #485562;
-        font-size: 0.76rem;
-      }
-
-      .pct-pill {
-        justify-self: end;
-        min-width: 76px;
-        padding: 7px 8px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.72);
-        border: 1px solid var(--line);
-        color: var(--muted);
-        text-align: center;
-        font-weight: 800;
-        font-size: 0.8rem;
-      }
-
-      .verdict {
-        color: #43505c;
-        font-size: 0.82rem;
-        line-height: 1.35;
-      }
-
-      .mv-box {
-        display: grid;
-        gap: 9px;
-        padding: 12px;
-        border: 1px solid var(--line);
-        border-radius: var(--inner-radius);
-        background: rgba(255, 255, 255, 0.9);
-      }
-
-      .mv-control {
-        display: grid;
-        grid-template-columns: auto minmax(180px, 1fr);
-        gap: 12px;
-        align-items: center;
-      }
-
-      .mv-control strong {
-        font-size: 0.9rem;
-      }
-
-      .big-money {
-        font-size: 1.65rem;
-        font-weight: 900;
-        letter-spacing: 0;
-      }
-
-      .helper-copy,
-      .description,
-      .micro-copy {
-        color: #45515d;
-        line-height: 1.45;
-      }
-
-      .helper-copy {
-        margin: 0;
-        font-size: 0.86rem;
-      }
-
-      .description {
-        margin: 0 0 10px;
-        font-size: 0.9rem;
-      }
-
-      .micro-copy {
-        font-size: 0.78rem;
-      }
-
-      .tag-cloud {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 7px;
-      }
-
-      .chart-panel {
-        display: grid;
-        gap: 12px;
-      }
-
-      .reference-note {
-        padding: 10px 12px;
-        border: 1px solid var(--line);
-        border-radius: var(--inner-radius);
-        background: rgba(23, 32, 42, 0.045);
-        color: #34404b;
-        font-size: 0.84rem;
-        font-weight: 700;
-        line-height: 1.45;
-      }
-
-      .chart-wrap {
-        position: relative;
-        min-height: 330px;
-        height: 360px;
-        border: 1px solid var(--line);
-        border-radius: var(--inner-radius);
-        background: rgba(255, 255, 255, 0.92);
-        padding: 10px;
-      }
-
-      .chart-wrap canvas {
-        width: 100% !important;
-        height: 100% !important;
-      }
-
-      .formula-select {
-        width: min(390px, 100%);
-      }
-
-      .banner {
-        display: grid;
-        grid-template-columns: auto 1fr auto;
-        gap: 12px;
-        align-items: center;
-        padding: 12px;
-        border: 1px solid var(--line);
-        border-radius: var(--inner-radius);
-        background: rgba(255, 255, 255, 0.9);
-      }
-
-      .banner strong {
-        display: block;
-        margin-bottom: 2px;
-      }
-
-      .banner .micro-copy {
-        color: #3a4651;
-        font-size: 0.86rem;
-        line-height: 1.35;
-      }
-
-      .banner-value {
-        font-size: 1.2rem;
-        font-weight: 900;
-        white-space: nowrap;
-      }
-
-      .split-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 10px;
-      }
-
-      .split-card,
-      .anchor-box {
-        display: grid;
-        gap: 6px;
-        min-width: 0;
-        overflow: hidden;
-        padding: 12px;
-        border: 1px solid var(--line);
-        border-radius: var(--inner-radius);
-        background: rgba(255, 255, 255, 0.9);
-      }
-
-      .split-card.is-good {
-        background: var(--green-soft);
-        border-color: color-mix(in srgb, var(--green) 34%, var(--line));
-      }
-
-      .split-title,
-      .anchor-label {
-        color: var(--muted);
-        font-size: 0.76rem;
-        font-weight: 850;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
-      .split-main,
-      .anchor-main {
-        color: var(--ink);
-        font-size: 1.1rem;
-        font-weight: 900;
-      }
-
-      .split-lift {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        min-width: 0;
-        width: 100%;
-        min-height: 34px;
-        padding: 6px 9px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        background: rgba(23, 32, 42, 0.055);
-        color: #3d4854;
-      }
-
-      .split-lift strong {
-        color: inherit;
-        font-size: 0.96rem;
-        font-weight: 900;
-        white-space: nowrap;
-      }
-
-      .split-lift span {
-        color: inherit;
-        font-size: 0.68rem;
-        font-weight: 850;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        white-space: nowrap;
-      }
-
-      .split-lift.is-good {
-        border-color: color-mix(in srgb, var(--green) 38%, var(--line));
-        background: rgba(37, 157, 142, 0.13);
-        color: var(--green);
-      }
-
-      .anchor-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-      }
-
-      .anchor-box.profit {
-        background: var(--green-soft);
-        border-color: color-mix(in srgb, var(--green) 35%, var(--line));
-      }
-
-      .market-controls {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        justify-content: flex-end;
-        align-items: center;
-      }
-
-      .check-control,
-      .rate-control {
-        display: inline-grid;
-        grid-template-columns: auto auto;
-        gap: 5px;
-        align-items: center;
-        min-height: 34px;
-        padding: 4px 8px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.72);
-        color: var(--muted);
-        font-size: 0.78rem;
-        font-weight: 800;
-        white-space: nowrap;
-      }
-
-      .rate-control {
-        grid-template-columns: auto 68px auto;
-      }
-
-      .check-control input {
-        width: 15px;
-        min-height: 15px;
-        accent-color: var(--accent);
-      }
-
-      .rate-control input {
-        min-height: 28px;
-        padding: 4px 8px;
-        text-align: right;
-      }
-
-      .counter-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-        gap: 12px;
-      }
-
-      textarea {
-        min-height: 168px;
-        resize: vertical;
-        padding: 10px;
-        line-height: 1.45;
-      }
-
-      .counter-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 9px;
-      }
-
-      .button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        min-height: 36px;
-        border: 1px solid var(--line-strong);
-        border-radius: 999px;
-        background: linear-gradient(135deg, #17202a 0%, #32404d 100%);
-        color: var(--panel);
-        padding: 8px 12px;
-        font-weight: 850;
-      }
-
-      .button.secondary {
-        background: rgba(255, 255, 255, 0.82);
-        color: var(--ink);
-      }
-
-      .script-output {
-        min-height: 217px;
-        max-height: 520px;
-        overflow: auto;
-        white-space: pre-wrap;
-        padding: 12px;
-        border: 1px solid var(--line);
-        border-radius: var(--inner-radius);
-        background: rgba(255, 255, 255, 0.9);
-        line-height: 1.5;
-        font-size: 0.9rem;
-      }
-
-      details {
-        margin-top: 10px;
-        color: var(--muted);
-        font-size: 0.82rem;
-      }
-
-      summary {
-        cursor: pointer;
-        font-weight: 800;
-      }
-
-      .prompt-output {
-        max-height: 280px;
-        overflow: auto;
-        margin-top: 8px;
-        padding: 10px;
-        border: 1px solid var(--line);
-        border-radius: var(--inner-radius);
-        background: rgba(255, 255, 255, 0.9);
-        color: var(--ink);
-        white-space: pre-wrap;
-      }
-
-      .wide-value {
-        justify-content: stretch;
-      }
-
-      .wide-value > * {
-        width: 100%;
-      }
-
-      .inline-amount {
-        display: inline-flex;
-        align-items: baseline;
-        gap: 8px;
-        justify-content: flex-end;
-      }
-
-      .inline-amount small {
-        color: var(--muted);
-        font-size: 0.76rem;
-        font-weight: 700;
-      }
-
-      @media (max-width: 1120px) {
-        .dashboard-grid,
-        .counter-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .topbar {
-          grid-template-columns: 1fr;
-        }
-
-        .chip-strip {
-          justify-content: flex-start;
-        }
-      }
-
-      @media (max-width: 760px) {
-        .app {
-          width: min(100% - 20px, 1480px);
-          padding-top: 10px;
-        }
-
-        .topbar {
-          position: static;
-        }
-
-        .row,
-        .score-row,
-        .anchor-grid,
-        .split-grid,
-        .mv-control,
-        .banner,
-        .location-picker {
-          grid-template-columns: 1fr;
-        }
-
-        .value,
-        .pct-pill {
-          justify-content: flex-start;
-          justify-self: stretch;
-          text-align: left;
-        }
-
-        .chart-wrap {
-          height: 310px;
-          min-height: 300px;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <main class="app">
-      <header class="topbar">
-        <div class="property-title">
-          <p class="eyebrow">DewClaw Land Holdings - Internal Pricing</p>
-          <h1 id="headerAddress">DCL Pricing Tool</h1>
-          <div class="location-picker" aria-label="Property location selector">
-            <label class="location-field">
-              <span>State</span>
-              <select id="propertyStateSelect"></select>
-            </label>
-            <label class="location-field">
-              <span>County</span>
-              <select id="propertyCountySelect"></select>
-            </label>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DewClaw Land Holdings — Pricing Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --color-background-primary:   #ffffff;
+  --color-background-secondary: #f6f4ef;
+  --color-background-tertiary:  #ecebe5;
+  --color-border-tertiary:      #e2dfd7;
+  --color-border-secondary:     #d3cfc4;
+  --color-text-primary:         #1a1a1a;
+  --color-text-secondary:       #4f4f4d;
+  --color-text-tertiary:        #8a8a87;
+  --color-background-success:   #dbf0e0;
+  --color-text-success:         #1d6e4a;
+  --color-background-warning:   #fdecc8;
+  --color-text-warning:         #8a6309;
+  --color-background-danger:    #f9d8cd;
+  --color-text-danger:          #a4310d;
+  --color-background-info:      #d6e4f5;
+  --color-text-info:            #2a5599;
+  --color-accent:               #534AB7;
+  --color-accent-soft:          rgba(83,74,183,.08);
+  --color-coral:                #D85A30;
+  --color-green-line:           #1D9E75;
+  --border-radius-lg:           12px;
+  --border-radius-md:           6px;
+  --border-radius-sm:           4px;
+  --shadow-card: 0 1px 2px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.03);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  background: #efece5;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 18px;
+}
+
+/* ---------- Top Bar ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 8px 4px;
+}
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.brand-mark {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.3px;
+  color: var(--color-text-primary);
+}
+.brand-sub {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.parcel-id {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: var(--color-background-primary);
+  padding: 5px 10px;
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-border-tertiary);
+}
+
+/* ---------- Grid Layout ---------- */
+.dashboard {
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: 14px;
+}
+.col { display: flex; flex-direction: column; gap: 14px; }
+
+/* ---------- Cards ---------- */
+.card {
+  background: var(--color-background-primary);
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+  padding: 14px 16px 16px;
+  box-shadow: var(--shadow-card);
+}
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.card-title {
+  font-size: 10.5px;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+}
+.card-sub {
+  font-size: 10.5px;
+  color: var(--color-text-tertiary);
+}
+
+/* ---------- Generic Rows ---------- */
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-top: 1px solid var(--color-border-tertiary);
+}
+.row:first-of-type { border-top: 0; }
+.row-label { color: var(--color-text-secondary); font-size: 12px; }
+.row-val { color: var(--color-text-primary); font-weight: 500; font-size: 13px; }
+
+/* ---------- Chips ---------- */
+.chip {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.2px;
+}
+.chip-success { background: var(--color-background-success); color: var(--color-text-success); }
+.chip-warning { background: var(--color-background-warning); color: var(--color-text-warning); }
+.chip-danger  { background: var(--color-background-danger);  color: var(--color-text-danger);  }
+.chip-info    { background: var(--color-background-info);    color: var(--color-text-info);    }
+.chip-neutral { background: var(--color-background-tertiary); color: var(--color-text-secondary); }
+
+/* ---------- Valuation Score ---------- */
+.score-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-border-tertiary);
+}
+.score-row:first-of-type { border-top: 0; padding-top: 4px; }
+.score-row .left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.score-row label {
+  font-size: 10.5px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+}
+.score-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.score-input {
+  background: var(--color-background-secondary);
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md);
+  padding: 5px 8px;
+  font-size: 13px;
+  width: 110px;
+  font-family: inherit;
+  color: var(--color-text-primary);
+}
+.score-input:focus { outline: 2px solid var(--color-accent); outline-offset: -1px; }
+.score-pct {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+.score-verdict {
+  font-size: 11.5px;
+  color: var(--color-text-secondary);
+}
+.score-ring {
+  position: relative;
+  width: 56px;
+  height: 56px;
+}
+.score-ring svg { transform: rotate(-90deg); }
+.score-ring .score-track { stroke: var(--color-border-tertiary); }
+.score-ring .score-fill { transition: stroke-dashoffset .25s ease; }
+.score-ring .score-num {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+/* ---------- Input MV ---------- */
+.mv-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mv-prefix {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+}
+.mv-input {
+  flex: 1;
+  font-size: 24px;
+  font-weight: 700;
+  font-family: inherit;
+  background: var(--color-background-secondary);
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md);
+  padding: 8px 12px;
+  color: var(--color-text-primary);
+}
+.mv-input:focus { outline: 2px solid var(--color-accent); outline-offset: -1px; }
+.mv-hint {
+  font-size: 10.5px;
+  color: var(--color-text-tertiary);
+  margin-top: 6px;
+  font-style: italic;
+}
+.mv-revert {
+  background: var(--color-background-secondary);
+  border: 1px solid var(--color-border-secondary);
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px 11px;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .12s ease, color .12s ease;
+}
+.mv-revert:hover { background: var(--color-background-tertiary); color: var(--color-text-primary); }
+.mv-revert[hidden] { display: none; }
+.mv-source-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  flex-wrap: wrap;
+}
+.mv-source-select {
+  font-family: inherit;
+  font-size: 11px;
+  padding: 3px 6px;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-sm);
+  background: var(--color-background-secondary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+.mv-ratio-input {
+  width: 44px;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 3px 5px;
+  text-align: center;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-sm);
+  background: var(--color-background-secondary);
+  color: var(--color-text-primary);
+}
+.mv-source-eq { margin-left: auto; color: var(--color-text-secondary); }
+.mv-source-eq strong { color: var(--color-text-primary); font-size: 13px; }
+
+/* ---------- Market Anchor 2×2 ---------- */
+.anchor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.anchor-box {
+  background: var(--color-background-secondary);
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 84px;
+}
+.anchor-box.is-profit {
+  background: var(--color-background-success);
+  border-color: rgba(29,110,74,.25);
+}
+.anchor-label {
+  font-size: 10px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+}
+.anchor-box.is-profit .anchor-label { color: var(--color-text-success); opacity: .9; }
+.anchor-figure {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.4px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.anchor-box.is-profit .anchor-figure { color: var(--color-text-success); }
+.anchor-figure-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+}
+.anchor-meta {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+.rate-input {
+  width: 42px;
+  font-size: 11px;
+  background: transparent;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-sm);
+  padding: 1px 4px;
+  font-family: inherit;
+  text-align: center;
+}
+.rate-input:focus { outline: 1px solid var(--color-accent); }
+
+/* ---------- Subdivide Chart ---------- */
+.chart-wrap {
+  position: relative;
+  height: 240px;
+  margin: 6px 0 10px;
+}
+.subdiv-banner {
+  padding: 8px 12px;
+  border-radius: var(--border-radius-md);
+  font-size: 12px;
+  font-weight: 600;
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.subdiv-banner.green { background: var(--color-background-success); color: var(--color-text-success); }
+.subdiv-banner.yellow { background: var(--color-background-warning); color: var(--color-text-warning); }
+.subdiv-banner.red { background: var(--color-background-danger); color: var(--color-text-danger); }
+.subdiv-banner .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor; opacity: .7;
+}
+
+.split-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+.split-card {
+  background: var(--color-background-secondary);
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md);
+  padding: 9px 10px;
+  text-align: center;
+}
+.split-card .split-label {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+}
+.split-card .split-ppa {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 3px 0 1px;
+}
+.split-card .split-mult {
+  font-size: 11px;
+  color: var(--color-text-success);
+  font-weight: 600;
+}
+.split-card.is-weak .split-mult { color: var(--color-text-tertiary); }
+
+/* ---------- Proximity Selector ---------- */
+.proximity-select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-border-tertiary);
+  background: var(--color-background-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+.proximity-detail {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.proximity-tags {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+/* ---------- Acreage flag note ---------- */
+.flag-note {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: var(--border-radius-md);
+  font-size: 11.5px;
+  display: none;
+}
+.flag-note.yellow { background: var(--color-background-warning); color: var(--color-text-warning); display: block; }
+.flag-note.red { background: var(--color-background-danger); color: var(--color-text-danger); display: block; }
+
+/* small helpers */
+.muted { color: var(--color-text-tertiary); }
+.mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.inline-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--color-border-secondary);
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  width: 48px;
+  text-align: center;
+}
+.inline-input:focus { outline: none; border-bottom: 1px solid var(--color-accent); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">DewClaw Land Holdings</div>
+    <div class="brand-sub">Pricing Dashboard</div>
+  </div>
+  <div class="parcel-id">APN 074-218-031 · Bandera County, TX</div>
+</div>
+
+<div class="dashboard">
+
+  <!-- ================== LEFT COLUMN ================== -->
+  <div class="col">
+
+    <!-- 1. Seller Signals -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Seller Signals</div>
+        <div class="card-sub">5 signals</div>
+      </div>
+      <div class="row">
+        <div class="row-label">Tax delinquent</div>
+        <div class="row-val"><span class="chip chip-danger">Yes</span></div>
+      </div>
+      <div class="row">
+        <div class="row-label">Back taxes</div>
+        <div class="row-val">$3,420</div>
+      </div>
+      <div class="row">
+        <div class="row-label">Annual property tax</div>
+        <div class="row-val">$1,150 / yr</div>
+      </div>
+      <div class="row">
+        <div class="row-label">Family transfer</div>
+        <div class="row-val"><span class="chip chip-neutral">No</span></div>
+      </div>
+      <div class="row">
+        <div class="row-label">Length of ownership</div>
+        <div class="row-val">23 years</div>
+      </div>
+    </div>
+
+    <!-- 2. Owner Proximity -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Owner Proximity</div>
+        <div class="card-sub">Mail: Los Angeles, CA</div>
+      </div>
+      <div class="row">
+        <div class="row-label">State match</div>
+        <div class="row-val"><span class="chip chip-danger">Out of state</span></div>
+      </div>
+      <div class="row">
+        <div class="row-label">County match</div>
+        <div class="row-val"><span class="chip chip-warning">Out of county</span></div>
+      </div>
+    </div>
+
+    <!-- 3. Valuation Score (DUAL) -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Valuation Score</div>
+        <div class="card-sub">vs. operator MV comp</div>
+      </div>
+
+      <div class="score-row">
+        <div class="left">
+          <label>Assessed Value</label>
+          <div class="score-input-wrap">
+            <span class="muted">$</span>
+            <input type="number" class="score-input" id="av-in" value="42000">
+            <span class="score-pct" id="av-pct">—</span>
           </div>
-          <div class="meta-strip">
-            <span class="meta-item" id="headerCounty">Taylor County, TX</span>
-            <span class="meta-item">APN <strong id="headerApn">R123456</strong></span>
-            <span class="meta-item"><strong id="headerAcres">42.70</strong> deeded ac</span>
+          <div class="score-verdict" id="av-verdict">—</div>
+        </div>
+        <div class="score-ring" id="av-ring"></div>
+      </div>
+
+      <div class="score-row">
+        <div class="left">
+          <label>Market Land Value <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">(LandInsight)</span></label>
+          <div class="score-input-wrap">
+            <span class="muted">$</span>
+            <input type="number" class="score-input" id="mlv-in" value="58000">
+            <span class="score-pct" id="mlv-pct">—</span>
+          </div>
+          <div class="score-verdict" id="mlv-verdict">—</div>
+        </div>
+        <div class="score-ring" id="mlv-ring"></div>
+      </div>
+    </div>
+
+    <!-- 4. Acreage Intel -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Acreage Intel</div>
+        <div class="card-sub" id="acreage-disc">—</div>
+      </div>
+      <div class="row">
+        <div class="row-label">Deeded acreage</div>
+        <div class="row-val"><input type="number" step="0.1" class="inline-input" id="deeded-in" value="24.5" style="width:64px"> ac</div>
+      </div>
+      <div class="row">
+        <div class="row-label">LandInsight calc</div>
+        <div class="row-val"><input type="number" step="0.1" class="inline-input" id="licalc-in" value="22.8" style="width:64px"> ac</div>
+      </div>
+      <div class="row">
+        <div class="row-label">Variance</div>
+        <div class="row-val" id="acreage-variance">—</div>
+      </div>
+      <div class="flag-note" id="flag-note"></div>
+    </div>
+
+    <!-- 5. Proximity / Lot Type -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Lot Type</div>
+        <div class="card-sub">Proximity classification</div>
+      </div>
+      <select class="proximity-select" id="proximity-select">
+        <option value="">— Select lot type —</option>
+        <optgroup label="Urban / Infill">
+          <option value="infill">Infill lot</option>
+          <option value="corner">Corner lot</option>
+          <option value="flag">Flag lot</option>
+          <option value="outlot">Outlot</option>
+        </optgroup>
+        <optgroup label="Suburban">
+          <option value="suburban_infill">Suburban infill / suburban lot</option>
+          <option value="suburban_fringe">Suburban fringe tract</option>
+        </optgroup>
+        <optgroup label="Transitional">
+          <option value="peri_urban" selected>Peri-urban tract</option>
+          <option value="exurban">Exurban tract</option>
+        </optgroup>
+        <optgroup label="Rural">
+          <option value="rural_residential">Rural residential tract</option>
+          <option value="agricultural">Agricultural tract</option>
+          <option value="rural_recreational">Rural recreational tract</option>
+        </optgroup>
+      </select>
+      <div class="proximity-detail" id="proximity-detail"></div>
+      <div class="proximity-tags" id="proximity-tags"></div>
+    </div>
+
+  </div>
+
+  <!-- ================== RIGHT COLUMN ================== -->
+  <div class="col">
+
+    <!-- 1. Price Pulse / Subdivide Curve -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Price Pulse · Subdivide Curve</div>
+        <div class="card-sub mono">18,781 × ac^-0.58</div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="curveChart"></canvas>
+      </div>
+      <div class="subdiv-banner green" id="subdiv-banner">
+        <span class="dot"></span>
+        <span id="subdiv-text">Subdividable — exponent −0.58</span>
+      </div>
+      <div class="split-grid">
+        <div class="split-card" id="split-2">
+          <div class="split-label">2-lot split</div>
+          <div class="split-ppa" id="split-2-ppa">—</div>
+          <div class="split-mult" id="split-2-mult">—</div>
+        </div>
+        <div class="split-card" id="split-3">
+          <div class="split-label">3-lot split</div>
+          <div class="split-ppa" id="split-3-ppa">—</div>
+          <div class="split-mult" id="split-3-mult">—</div>
+        </div>
+        <div class="split-card" id="split-4">
+          <div class="split-label">4-lot split</div>
+          <div class="split-ppa" id="split-4-ppa">—</div>
+          <div class="split-mult" id="split-4-mult">—</div>
+        </div>
+        <div class="split-card" id="split-5">
+          <div class="split-label">5-lot split</div>
+          <div class="split-ppa" id="split-5-ppa">—</div>
+          <div class="split-mult" id="split-5-mult">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Input Market Value -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Input Market Value</div>
+        <div class="card-sub">Sourced from LandInsight · editable</div>
+      </div>
+      <div class="mv-input-wrap">
+        <span class="mv-prefix">$</span>
+        <input type="number" class="mv-input" id="mv-input" value="116000" step="1000">
+        <button type="button" class="mv-revert" id="mv-revert" title="Restore the LandInsight-sourced value" hidden>↺ Revert</button>
+      </div>
+      <div class="mv-source-row">
+        <select id="mv-source-field" class="mv-source-select">
+          <option value="mlv" selected>Market Land Value</option>
+          <option value="av">Assessed Value</option>
+        </select>
+        <span>at</span>
+        <input type="number" id="mv-ratio" class="mv-ratio-input" value="50" step="1" min="1" max="100">
+        <span>% of MV</span>
+        <span class="mv-source-eq">→ <strong id="mv-sourced">$116,000</strong></span>
+      </div>
+      <div class="mv-hint">MV is sourced from the LandInsight figure ÷ your target ratio (50% = the valuation sweet spot). Edit freely for what-if pricing; <em>Revert</em> restores the sourced figure. The subdivide trend line is acreage-based and is never affected by MV.</div>
+    </div>
+
+    <!-- 3. Market Anchor -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Market Anchor</div>
+        <div class="card-sub">Realtor rate <input type="number" step="0.1" class="rate-input" id="rate-input" value="3">%</div>
+      </div>
+      <div class="anchor-grid">
+        <div class="anchor-box">
+          <div class="anchor-label">Market Value</div>
+          <div class="anchor-figure">
+            <span id="b-total">$168,000</span>
+            <span class="anchor-figure-sub" id="b-ppa">$6,857/ac</span>
           </div>
         </div>
-        <div class="chip-strip">
-          <span class="chip red" id="headerTaxChip">Tax delinquent</span>
-          <span class="chip yellow" id="headerOwnerChip">Out of county</span>
-          <span class="chip blue" id="headerOwnershipChip">24 yr owner</span>
+        <div class="anchor-box">
+          <div class="anchor-label">Offer Range · 50–70%</div>
+          <div class="anchor-figure" style="font-size:16px"><span id="b-offer-range">$84,000 – $117,600</span></div>
+          <div class="anchor-meta">Working spread</div>
         </div>
-      </header>
-
-      <section class="dashboard-grid">
-        <div class="column">
-          <article class="card">
-            <div class="card-header">
-              <h2 class="section-title"><i data-lucide="badge-alert"></i>Seller Signals</h2>
-            </div>
-            <div class="card-body">
-              <div class="rows">
-                <div class="row">
-                  <div class="label">Tax delinquent</div>
-                  <div class="value">
-                    <select id="taxDelinquent">
-                      <option value="yes" selected>Yes</option>
-                      <option value="no">No</option>
-                    </select>
-                    <span class="chip red" id="taxDelinquentChip">Yes</span>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="label">Back taxes</div>
-                  <div class="value">
-                    <label class="money-input">
-                      <input id="backTaxes" type="number" min="0" step="100" value="6200" />
-                    </label>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="label">Annual property tax</div>
-                  <div class="value">
-                    <label class="money-input">
-                      <input id="annualTax" type="number" min="0" step="50" value="1890" />
-                    </label>
-                    <span class="suffix">/yr</span>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="label">Family transfer</div>
-                  <div class="value">
-                    <select id="familyTransfer">
-                      <option value="yes" selected>Yes</option>
-                      <option value="no">No</option>
-                    </select>
-                    <span class="chip yellow" id="familyTransferChip">Yes</span>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="label">Length of ownership</div>
-                  <div class="value">
-                    <label class="input-with-suffix number-input">
-                      <input id="ownershipYears" type="number" min="0" step="1" value="24" />
-                      <span class="suffix">years</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-header">
-              <h2 class="section-title"><i data-lucide="map-pin"></i>Owner Proximity</h2>
-            </div>
-            <div class="card-body">
-              <div class="rows">
-                <div class="row">
-                  <div class="label">Property county</div>
-                  <div class="value wide-value"><input id="propertyCounty" value="Taylor" /></div>
-                </div>
-                <div class="row">
-                  <div class="label">Property state</div>
-                  <div class="value wide-value"><input id="propertyState" value="TX" maxlength="2" /></div>
-                </div>
-                <div class="row">
-                  <div class="label">Owner county</div>
-                  <div class="value wide-value"><input id="ownerCounty" value="Dallas" /></div>
-                </div>
-                <div class="row">
-                  <div class="label">Owner state</div>
-                  <div class="value wide-value"><input id="ownerState" value="TX" maxlength="2" /></div>
-                </div>
-                <div class="row">
-                  <div class="label">State</div>
-                  <div class="value"><span class="chip green" id="ownerStateChip">In-state</span></div>
-                </div>
-                <div class="row">
-                  <div class="label">County</div>
-                  <div class="value"><span class="chip yellow" id="ownerCountyChip">Out of county</span></div>
-                </div>
-                <div class="row">
-                  <div class="label">Owner location</div>
-                  <div class="value wide-value">
-                    <input id="ownerLocation" value="Dallas, TX 75201" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-header">
-              <h2 class="section-title"><i data-lucide="gauge"></i>Valuation Score</h2>
-            </div>
-            <div class="card-body">
-              <div class="score-list">
-                <div class="score-row">
-                  <div class="score-ring" id="assessedScoreRing">0.0</div>
-                  <div class="score-meta">
-                    <span class="score-name">Assessed Value</span>
-                    <span class="score-source">LandInsight figure vs MV (operator comp)</span>
-                  </div>
-                  <label class="money-input">
-                    <input id="assessedValue" type="number" min="0" step="100" value="89400" />
-                  </label>
-                  <div>
-                    <div class="pct-pill" id="assessedPct">0.0%</div>
-                    <div class="verdict" id="assessedVerdict">-</div>
-                  </div>
-                </div>
-                <div class="score-row">
-                  <div class="score-ring" id="marketLandScoreRing">0.0</div>
-                  <div class="score-meta">
-                    <span class="score-name">Market land value</span>
-                    <span class="score-source">LandInsight figure, not MV</span>
-                  </div>
-                  <label class="money-input">
-                    <input id="marketLandValue" type="number" min="0" step="100" value="120000" />
-                  </label>
-                  <div>
-                    <div class="pct-pill" id="marketLandPct">0.0%</div>
-                    <div class="verdict" id="marketLandVerdict">-</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-header">
-              <h2 class="section-title"><i data-lucide="ruler"></i>Acreage Intel</h2>
-            </div>
-            <div class="card-body">
-              <div class="rows">
-                <div class="row">
-                  <div class="label">Property address</div>
-                  <div class="value wide-value">
-                    <input id="propertyAddress" value="DCL Pricing Tool" />
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="label">APN</div>
-                  <div class="value wide-value"><input id="apn" value="R123456" /></div>
-                </div>
-                <div class="row">
-                  <div class="label">Deeded acreage</div>
-                  <div class="value">
-                    <label class="input-with-suffix number-input">
-                      <input id="deededAcres" type="number" min="0.01" step="0.1" value="42.7" />
-                      <span class="suffix">ac</span>
-                    </label>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="label">LandInsight calc acreage</div>
-                  <div class="value">
-                    <label class="input-with-suffix number-input">
-                      <input id="liCalcAcres" type="number" min="0" step="0.1" value="40.2" />
-                      <span class="suffix">ac</span>
-                    </label>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="label">Discrepancy</div>
-                  <div class="value">
-                    <span id="acreageDiscrepancy">-</span>
-                    <span class="chip yellow" id="surveyFlag">Watch zone</span>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="label">Minimum acceptable</div>
-                  <div class="value"><span id="minAcceptableAcres">-</span></div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-header">
-              <h2 class="section-title"><i data-lucide="route"></i>Proximity</h2>
-            </div>
-            <div class="card-body">
-              <select id="lotType">
-                <optgroup label="Urban/Infill">
-                  <option value="infill" selected>Infill lot</option>
-                  <option value="corner">Corner lot</option>
-                  <option value="flag">Flag lot</option>
-                  <option value="outlot">Outlot</option>
-                </optgroup>
-                <optgroup label="Suburban">
-                  <option value="suburban_infill">Suburban infill</option>
-                  <option value="suburban_fringe">Suburban fringe tract</option>
-                </optgroup>
-                <optgroup label="Transitional">
-                  <option value="peri_urban">Peri-urban tract</option>
-                  <option value="exurban">Exurban tract</option>
-                </optgroup>
-                <optgroup label="Rural">
-                  <option value="rural_residential">Rural residential tract</option>
-                  <option value="agricultural">Agricultural tract</option>
-                  <option value="rural_recreational">Rural recreational tract</option>
-                </optgroup>
-              </select>
-              <p class="description" id="lotDescription"></p>
-              <div class="tag-cloud" id="lotTags"></div>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-header">
-              <h2 class="section-title"><i data-lucide="circle-dollar-sign"></i>Input MV</h2>
-            </div>
-            <div class="card-body">
-              <div class="mv-box">
-                <div class="mv-control">
-                  <strong>MV (operator comp)</strong>
-                  <label class="money-input">
-                    <input id="mvInput" type="number" min="1" step="1000" value="168000" />
-                  </label>
-                </div>
-                <p class="helper-copy">
-                  This operator-entered comp drives pricing, valuation scores, chart thresholds,
-                  and Counter Craft context.
-                </p>
-              </div>
-            </div>
-          </article>
+        <div class="anchor-box">
+          <div class="anchor-label">Max Offer · f(MV)</div>
+          <div class="anchor-figure"><span id="b-maxoffer">$147,745</span></div>
+          <div class="anchor-meta" id="b-maxoffer-pct">87.9% of MV</div>
         </div>
-
-        <div class="column">
-          <article class="card">
-            <div class="card-header">
-              <h2 class="section-title"><i data-lucide="activity"></i>Price Pulse / Subdivide Curve</h2>
-              <select class="formula-select" id="countyFormula"></select>
-            </div>
-            <div class="card-body chart-panel">
-              <div class="chart-wrap">
-                <canvas id="pricePulseChart" aria-label="Price per acre curve"></canvas>
-              </div>
-              <div class="reference-note" id="countyFormulaMeta">Using default working formula.</div>
-              <div class="banner" id="classificationBanner">
-                <span class="chip green" id="classificationChip">Subdividable</span>
-                <div>
-                  <strong id="classificationTitle">Subdividable</strong>
-                  <span class="micro-copy" id="classificationDetail">-</span>
-                </div>
-                <div class="banner-value" id="bestSplitUpside">-</div>
-              </div>
-              <div class="split-grid" id="splitGrid"></div>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-header">
-              <h2 class="section-title"><i data-lucide="anchor"></i>Market Anchor</h2>
-              <div class="market-controls">
-                <label class="check-control">
-                  <input id="autoRealtorRate" type="checkbox" checked />
-                  Auto rubric
-                </label>
-                <label class="rate-control">
-                  Realtor
-                  <input id="realtorRate" type="number" min="0" max="20" step="0.1" value="5" />
-                  %
-                </label>
-                <label class="rate-control">
-                  Closing
-                  <input id="closingCost" type="number" min="0" step="100" value="2500" />
-                </label>
-              </div>
-            </div>
-            <div class="card-body">
-              <div class="anchor-grid">
-                <div class="anchor-box">
-                  <span class="anchor-label">Market Value</span>
-                  <div class="inline-amount">
-                    <span class="anchor-main" id="marketValueDisplay">$0</span>
-                    <small id="pricePerAcreDisplay">$0/ac</small>
-                  </div>
-                </div>
-                <div class="anchor-box">
-                  <span class="anchor-label">Offer Range</span>
-                  <span class="anchor-main" id="offerRangeDisplay">$0 - $0</span>
-                  <span class="micro-copy" id="offerRangeDetail">Rubric tier range</span>
-                </div>
-                <div class="anchor-box">
-                  <span class="anchor-label">Max Offer f(MV)</span>
-                  <span class="anchor-main" id="maxOfferDisplay">$0</span>
-                  <span class="micro-copy" id="maxOfferPctDisplay">0.0% of MV</span>
-                </div>
-                <div class="anchor-box profit">
-                  <span class="anchor-label">Estimated Profit</span>
-                  <span class="anchor-main" id="profitDisplay">$0</span>
-                  <span class="micro-copy" id="profitBreakdown">-</span>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-header">
-              <h2 class="section-title"><i data-lucide="messages-square"></i>Counter Craft</h2>
-            </div>
-            <div class="card-body">
-              <div class="counter-grid">
-                <div>
-                  <textarea id="negotiationPoint">Seller wants to be near full market value, but back taxes are piling up and the acreage looks slightly short in LandInsight.</textarea>
-                  <div class="counter-actions">
-                    <button class="button" id="generateCounter" type="button">
-                      <i data-lucide="sparkles"></i>
-                      Generate counter
-                    </button>
-                    <button class="button secondary" id="copyCounterPrompt" type="button">
-                      <i data-lucide="copy"></i>
-                      Copy prompt
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <div class="script-output" id="counterOutput"></div>
-                  <details>
-                    <summary>Prompt package</summary>
-                    <div class="prompt-output" id="counterPromptOutput"></div>
-                  </details>
-                </div>
-              </div>
-            </div>
-          </article>
+        <div class="anchor-box is-profit">
+          <div class="anchor-label">Est. Profit</div>
+          <div class="anchor-figure"><span id="b-profit">$12,712</span></div>
+          <div class="anchor-meta">Net g(MV) − max offer f(MV)</div>
         </div>
-      </section>
-    </main>
+      </div>
+    </div>
 
-    <script>
-      const $ = (id) => document.getElementById(id);
-      const money = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        maximumFractionDigits: 0,
-      });
-      const moneyPerAc = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        maximumFractionDigits: 0,
-      });
+  </div>
+</div>
 
-      const countyFormulas = [
-        { coeff: 10776, exponent: -0.37, label: "10776 * ac^-0.37 (non-sub)" },
-        { coeff: 18781, exponent: -0.58, label: "18781 * ac^-0.58 (sub, default)", default: true },
-        { coeff: 16400, exponent: -0.41, label: "16400 * ac^-0.41 (sub)" },
-        { coeff: 39274, exponent: -0.73, label: "39274 * ac^-0.73 (sub)" },
-        { coeff: 24680, exponent: -0.40, label: "24680 * ac^-0.40 (semi)" },
-        { coeff: 38765, exponent: -0.63, label: "38765 * ac^-0.63 (sub)" },
-        { coeff: 9247, exponent: -0.31, label: "9247 * ac^-0.31 (non-sub)" },
-        { coeff: 13700, exponent: -0.33, label: "13700 * ac^-0.33 (non-sub)" },
-        { coeff: 17574, exponent: -0.33, label: "17574 * ac^-0.33 (non-sub)" },
-        { coeff: 37850, exponent: -0.51, label: "37850 * ac^-0.51 (sub)" },
-        { coeff: 39648, exponent: -0.79, label: "39648 * ac^-0.79 (sub)" },
-        { coeff: 21780, exponent: -0.56, label: "21780 * ac^-0.56 (sub)" },
-      ];
+<script>
+/* ============================================================
+   DewClaw Pricing Dashboard — Mockup
+   All formulas per the spec.
+   ============================================================ */
 
-      const states = [
-        ["AL", "Alabama"],
-        ["AK", "Alaska"],
-        ["AZ", "Arizona"],
-        ["AR", "Arkansas"],
-        ["CA", "California"],
-        ["CO", "Colorado"],
-        ["CT", "Connecticut"],
-        ["DE", "Delaware"],
-        ["FL", "Florida"],
-        ["GA", "Georgia"],
-        ["HI", "Hawaii"],
-        ["ID", "Idaho"],
-        ["IL", "Illinois"],
-        ["IN", "Indiana"],
-        ["IA", "Iowa"],
-        ["KS", "Kansas"],
-        ["KY", "Kentucky"],
-        ["LA", "Louisiana"],
-        ["ME", "Maine"],
-        ["MD", "Maryland"],
-        ["MA", "Massachusetts"],
-        ["MI", "Michigan"],
-        ["MN", "Minnesota"],
-        ["MS", "Mississippi"],
-        ["MO", "Missouri"],
-        ["MT", "Montana"],
-        ["NE", "Nebraska"],
-        ["NV", "Nevada"],
-        ["NH", "New Hampshire"],
-        ["NJ", "New Jersey"],
-        ["NM", "New Mexico"],
-        ["NY", "New York"],
-        ["NC", "North Carolina"],
-        ["ND", "North Dakota"],
-        ["OH", "Ohio"],
-        ["OK", "Oklahoma"],
-        ["OR", "Oregon"],
-        ["PA", "Pennsylvania"],
-        ["RI", "Rhode Island"],
-        ["SC", "South Carolina"],
-        ["SD", "South Dakota"],
-        ["TN", "Tennessee"],
-        ["TX", "Texas"],
-        ["UT", "Utah"],
-        ["VT", "Vermont"],
-        ["VA", "Virginia"],
-        ["WA", "Washington"],
-        ["WV", "West Virginia"],
-        ["WI", "Wisconsin"],
-        ["WY", "Wyoming"],
-      ];
+/* ---------- Formatters ---------- */
+const fmt = n => '$' + Math.round(n).toLocaleString();
+const fmtPPA = n => '$' + Math.round(n).toLocaleString() + '/ac';
 
-      const countyLibrary = {
-        AL: ["Baldwin", "Calhoun", "Cullman", "Etowah", "Jefferson", "Lee", "Madison", "Mobile", "Montgomery", "Shelby", "Tuscaloosa"],
-        AZ: ["Apache", "Cochise", "Coconino", "Gila", "Maricopa", "Mohave", "Navajo", "Pima", "Pinal", "Yavapai", "Yuma"],
-        AR: ["Benton", "Craighead", "Faulkner", "Garland", "Pulaski", "Saline", "Sebastian", "Washington", "White"],
-        CA: ["Butte", "Fresno", "Kern", "Los Angeles", "Riverside", "Sacramento", "San Bernardino", "San Diego", "San Luis Obispo", "Tulare"],
-        CO: ["Adams", "Arapahoe", "Boulder", "Douglas", "El Paso", "Fremont", "Jefferson", "Larimer", "Mesa", "Pueblo", "Weld"],
-        FL: ["Alachua", "Brevard", "Charlotte", "Citrus", "Duval", "Hernando", "Hillsborough", "Lee", "Marion", "Orange", "Pasco", "Polk", "Putnam", "Volusia"],
-        GA: ["Bartow", "Carroll", "Cherokee", "Coweta", "Floyd", "Fulton", "Gwinnett", "Hall", "Henry", "Paulding", "Troup", "Walton"],
-        KY: ["Boone", "Bullitt", "Christian", "Fayette", "Hardin", "Jefferson", "Madison", "Oldham", "Pulaski", "Warren"],
-        LA: ["Ascension", "Bossier", "Caddo", "Calcasieu", "East Baton Rouge", "Lafayette", "Livingston", "Ouachita", "St. Tammany", "Tangipahoa"],
-        MS: ["DeSoto", "Forrest", "Harrison", "Hinds", "Jackson", "Jones", "Lafayette", "Lee", "Madison", "Rankin"],
-        NC: ["Alamance", "Brunswick", "Buncombe", "Cabarrus", "Catawba", "Cumberland", "Davidson", "Forsyth", "Gaston", "Harnett", "Hoke", "Iredell", "Johnston", "Mecklenburg", "Moore", "Onslow", "Randolph", "Robeson", "Rowan", "Union", "Wake", "Wayne"],
-        OK: ["Canadian", "Cleveland", "Comanche", "Creek", "Garfield", "Grady", "Logan", "Oklahoma", "Payne", "Rogers", "Tulsa", "Wagoner"],
-        SC: ["Aiken", "Anderson", "Beaufort", "Berkeley", "Charleston", "Dorchester", "Greenville", "Horry", "Lexington", "Pickens", "Spartanburg", "York"],
-        TN: ["Blount", "Bradley", "Davidson", "Hamilton", "Knox", "Maury", "Montgomery", "Rutherford", "Sevier", "Shelby", "Sumner", "Williamson", "Wilson"],
-        TX: ["Anderson", "Angelina", "Bastrop", "Bell", "Bexar", "Brazoria", "Brazos", "Burnet", "Caldwell", "Collin", "Comal", "Dallas", "Denton", "Ellis", "Erath", "Fannin", "Fort Bend", "Grayson", "Guadalupe", "Harris", "Hays", "Henderson", "Hood", "Hunt", "Johnson", "Kaufman", "Liberty", "McLennan", "Medina", "Montgomery", "Nueces", "Parker", "Rockwall", "Smith", "Tarrant", "Taylor", "Travis", "Van Zandt", "Victoria", "Williamson", "Wise"],
-        VA: ["Albemarle", "Augusta", "Bedford", "Chesterfield", "Dinwiddie", "Fauquier", "Frederick", "Hanover", "Henrico", "Loudoun", "Prince William", "Spotsylvania"],
-        WV: ["Berkeley", "Cabell", "Greenbrier", "Harrison", "Jefferson", "Kanawha", "Marion", "Mercer", "Monongalia", "Raleigh"],
-      };
+/* ---------- Subdivide Curve ---------- */
+const COEFF = 18781;
+const EXP   = -0.58;
+const pricePerAc = a => COEFF * Math.pow(a, EXP);
 
-      const lotTypes = {
-        infill: {
-          tone: "green",
-          description: "Urban platted lot with utilities at or near the street and a short path to a normal build check.",
-          tags: ["Urban", "Platted", "Utilities at street", "Ready to build"],
+function classifySubdivide(exp) {
+  if (exp <= -0.40) return { cls: 'Subdividable', color: 'green' };
+  if (exp <= -0.35) return { cls: 'Semi-subdividable', color: 'yellow' };
+  return { cls: 'Non-subdividable', color: 'red' };
+}
+
+/* ---------- Max Offer f(MV) ---------- */
+function fOffer(mv) {
+  if (mv <= 0) return 0;
+  return 92.0 - 55.0 * Math.exp(-0.00161 * Math.pow(mv, 0.620));
+}
+
+/* ---------- Net Proceeds g(MV) ---------- */
+function gNet(mv, ratePct) {
+  if (mv <= 0) return 0;
+  const rate = ratePct / 100;
+  return (1 - rate) * 100 - (2500 / mv) * 100;
+}
+
+/* ---------- Survey Flag ---------- */
+function surveyFlag(deeded, liCalc) {
+  if (deeded <= 0) return { level: 'normal', text: '' };
+  const thresholdPct = 54 * Math.pow(deeded, -0.376);
+  const minAc        = deeded * (1 - thresholdPct / 100);
+  const watchUpper   = minAc * 1.15;
+  if (liCalc >= watchUpper)  return { level: 'normal',  thresholdPct, minAc };
+  if (liCalc >= minAc)       return { level: 'watch',   thresholdPct, minAc };
+  return                            { level: 'hard',    thresholdPct, minAc };
+}
+
+/* ---------- Valuation Score (piecewise linear) ---------- */
+const SCORE_ANCHORS = [
+  [0, 0], [15, 1], [25, 2.5], [30, 4.5], [50, 10],
+  [70, 6.5], [80, 4], [90, 1], [100, 0], [115, 0]
+];
+function interpScore(pct) {
+  if (pct <= 0 || pct >= 115) return 0;
+  for (let i = 0; i < SCORE_ANCHORS.length - 1; i++) {
+    const [x0, y0] = SCORE_ANCHORS[i];
+    const [x1, y1] = SCORE_ANCHORS[i + 1];
+    if (pct >= x0 && pct <= x1) {
+      return y0 + (pct - x0) / (x1 - x0) * (y1 - y0);
+    }
+  }
+  return 0;
+}
+function scoreColor(s) {
+  if (s >= 8) return { fill: '#1D9E75', label: 'Strong leverage' };
+  if (s >= 6) return { fill: '#2A6FB7', label: 'Good — workable' };
+  if (s >= 4) return { fill: '#C99421', label: 'Fair — proceed with awareness' };
+  return         { fill: '#C84A28', label: 'Weak — hard to build a case' };
+}
+function verdictText(pct) {
+  if (pct < 15) return 'Very low — hard to justify to seller';
+  if (pct < 35) return 'Below typical — good negotiation room';
+  if (pct < 48) return 'Approaching sweet spot';
+  if (pct < 53) return 'Perfect — maximum negotiation leverage';
+  if (pct < 65) return 'Slightly above ideal — still workable';
+  if (pct < 80) return 'High — reduced negotiation room';
+  return            'Very high — little spread to work with';
+}
+
+/* ---------- Score Ring Rendering ---------- */
+function renderRing(elId, score) {
+  const el = document.getElementById(elId);
+  const pct = Math.max(0, Math.min(1, score / 10));
+  const r = 22, c = 2 * Math.PI * r;
+  const dash = c * pct;
+  const { fill } = scoreColor(score);
+  el.innerHTML = `
+    <svg width="56" height="56" viewBox="0 0 56 56">
+      <circle cx="28" cy="28" r="${r}" fill="none" stroke-width="5" class="score-track"></circle>
+      <circle cx="28" cy="28" r="${r}" fill="none" stroke-width="5"
+              stroke="${fill}" stroke-linecap="round"
+              stroke-dasharray="${c}" stroke-dashoffset="${c - dash}"
+              class="score-fill"></circle>
+    </svg>
+    <div class="score-num">${score.toFixed(1)}</div>
+  `;
+}
+
+/* ---------- Lot Type Library ---------- */
+const LOT_TYPES = {
+  infill:             { name: 'Infill lot', desc: 'Empty parcel inside an established neighborhood. Utilities are typically at the street and the platting work is already done — closest thing to a ready-to-build lot in the urban tier.', tags: [['Urban','success'],['Platted','success'],['Utilities at street','success'],['Ready to build','success']] },
+  corner:             { name: 'Corner lot', desc: 'Sits at the intersection of two streets. Dual frontage can be a premium but watch the setbacks — usable building envelope can shrink quickly.', tags: [['Urban','success'],['Dual frontage','success'],['Check setbacks','warning']] },
+  flag:               { name: 'Flag lot', desc: 'Long narrow access "pole" leading to a buildable square. Often discounted because access is awkward, and some lenders will not finance.', tags: [['Tricky access','warning'],['Flagpole strip','warning'],['Finance risk','danger']] },
+  outlot:             { name: 'Outlot', desc: 'A platted reserve parcel — often dedicated to drainage, open space, or HOA use. Frequently unbuildable. Verify the deed/plat purpose before any offer.', tags: [['Unbuildable','danger'],['Platted reserve','danger'],['Check purpose','warning']] },
+  suburban_infill:    { name: 'Suburban infill / suburban lot', desc: 'Vacant lot inside an established suburban subdivision. Utilities are usually nearby and the development pattern is set — low-friction build.', tags: [['Near city','success'],['Utilities likely','success'],['Low friction','success']] },
+  suburban_fringe:    { name: 'Suburban fringe tract', desc: 'Sits in the ETJ or just past city limits — directly in the path of growth. Utilities may be nearby but not extended. Strong appreciation candidate.', tags: [['ETJ territory','info'],['Path of growth','info'],['Utilities nearby','info']] },
+  peri_urban:         { name: 'Peri-urban tract', desc: '5–20 miles out of the city. Transitional zone — mixed residential, light agricultural, and the occasional commercial use. Buyer profile is broad.', tags: [['5–20 mi from city','info'],['Transitional','info'],['Mixed use nearby','info']] },
+  exurban:            { name: 'Exurban tract', desc: '20–50 miles out — commuter belt. Large lot residential dominates. Demand depends on how aggressively the metro area is pushing outward.', tags: [['20–50 mi out','neutral'],['Large lot residential','neutral'],['Commuter zone','neutral']] },
+  rural_residential:  { name: 'Rural residential tract', desc: 'Far enough out that the buyer profile shifts to lifestyle: home on acreage, weekend retreats, small horse operations. Hold for value, not quick flip.', tags: [['Far out','neutral'],['Large lot homes','neutral'],['Hold for value','neutral']] },
+  agricultural:       { name: 'Agricultural tract', desc: 'Primary value is in the soil, water rights, and crop potential. Pricing should reflect productive use, not residential comps. Tax exemptions are usually in play.', tags: [['Soil value','warning'],['Water rights','warning'],['Crop potential','warning']] },
+  rural_recreational: { name: 'Rural recreational tract', desc: 'Timber, hunting, or lifestyle parcel. No development horizon. Buyer is recreational and emotional — pricing is driven by use enjoyment, not yield.', tags: [['Timber/hunting','danger'],['Lifestyle value','danger'],['No dev horizon','danger']] }
+};
+function renderProximity() {
+  const key = document.getElementById('proximity-select').value;
+  const detail = document.getElementById('proximity-detail');
+  const tagWrap = document.getElementById('proximity-tags');
+  if (!key) { detail.textContent = ''; tagWrap.innerHTML = ''; return; }
+  const lt = LOT_TYPES[key];
+  detail.textContent = lt.desc;
+  tagWrap.innerHTML = lt.tags.map(([t,c]) => `<span class="chip chip-${c}">${t}</span>`).join('');
+}
+
+/* ---------- Chart Setup ---------- */
+let chart;
+function buildChart(subjectAcres) {
+  const xs = [];
+  const ys = [];
+  for (let a = 1; a <= 120; a++) {
+    xs.push(a);
+    ys.push(pricePerAc(a));
+  }
+  const subjectPPA = pricePerAc(subjectAcres);
+  const subjectIdx = Math.max(0, Math.min(xs.length - 1, Math.round(subjectAcres) - 1));
+
+  const ctx = document.getElementById('curveChart').getContext('2d');
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: xs,
+      datasets: [
+        {
+          label: '$/ac curve',
+          data: ys,
+          borderColor: '#534AB7',
+          backgroundColor: 'rgba(83,74,183,.08)',
+          tension: 0.3, pointRadius: 0, borderWidth: 2.5, fill: true
         },
-        corner: {
-          tone: "green",
-          description: "Urban lot with dual frontage. Good visibility and access, with setbacks worth checking before pricing tightly.",
-          tags: ["Urban", "Dual frontage", "Check setbacks"],
+        {
+          label: '2× line',
+          data: xs.map(() => subjectPPA * 2),
+          borderColor: '#1D9E75',
+          borderDash: [6, 4], pointRadius: 0, borderWidth: 1.5, fill: false
         },
-        flag: {
-          tone: "yellow",
-          description: "Access runs through a narrow flagpole strip. Buildability and financing depend heavily on access width and local rules.",
-          tags: ["Tricky access", "Flagpole strip", "Finance risk"],
-        },
-        outlot: {
-          tone: "red",
-          description: "Platted reserve or leftover tract. Confirm purpose and buildability before treating it like a normal lot.",
-          tags: ["Unbuildable", "Platted reserve", "Check purpose"],
-        },
-        suburban_infill: {
-          tone: "green",
-          description: "Near-city parcel with likely utility access and relatively low entitlement friction.",
-          tags: ["Near city", "Utilities likely", "Low friction"],
-        },
-        suburban_fringe: {
-          tone: "blue",
-          description: "Edge-of-growth parcel, often in ETJ territory, with upside tied to utility reach and nearby development momentum.",
-          tags: ["ETJ territory", "Path of growth", "Utilities nearby"],
-        },
-        peri_urban: {
-          tone: "blue",
-          description: "Transitional 5 to 20 mile tract with mixed nearby use and optionality between rural hold and future growth.",
-          tags: ["5-20 mi from city", "Transitional", "Mixed use nearby"],
-        },
-        exurban: {
-          tone: "gray",
-          description: "20 to 50 mile commuter-zone tract where value leans on large-lot residential demand.",
-          tags: ["20-50 mi out", "Large lot residential", "Commuter zone"],
-        },
-        rural_residential: {
-          tone: "gray",
-          description: "Farther-out large-lot home tract. Usually a hold-for-value play unless access, utilities, or area sales are strong.",
-          tags: ["Far out", "Large lot homes", "Hold for value"],
-        },
-        agricultural: {
-          tone: "yellow",
-          description: "Agricultural value depends on soil, water, lease income, and crop or grazing potential.",
-          tags: ["Soil value", "Water rights", "Crop potential"],
-        },
-        rural_recreational: {
-          tone: "red",
-          description: "Lifestyle-driven timber, hunting, or weekend-use parcel with little near-term development horizon.",
-          tags: ["Timber/hunting", "Lifestyle value", "No dev horizon"],
-        },
-      };
-
-      let pricePulseChart = null;
-      let lastCounterPrompt = "";
-      let masterFormulaRecord = null;
-
-      function num(id, fallback = 0) {
-        const value = Number($(id).value);
-        return Number.isFinite(value) ? value : fallback;
-      }
-
-      function text(id) {
-        return String($(id).value || "").trim();
-      }
-
-      function formatMoney(value) {
-        return Number.isFinite(value) ? money.format(value) : "$0";
-      }
-
-      function formatPpa(value) {
-        return `${Number.isFinite(value) ? moneyPerAc.format(value) : "$0"}/ac`;
-      }
-
-      function setChip(el, label, tone) {
-        el.className = `chip ${tone}`;
-        el.textContent = label;
-      }
-
-      function interpScore(pct) {
-        const anchors = [
-          [0, 0],
-          [15, 1],
-          [25, 2.5],
-          [30, 4.5],
-          [50, 10],
-          [70, 6.5],
-          [80, 4],
-          [90, 1],
-          [100, 0],
-          [115, 0],
-        ];
-
-        if (pct <= 0 || pct >= 115) return 0;
-
-        for (let i = 0; i < anchors.length - 1; i += 1) {
-          const [x0, y0] = anchors[i];
-          const [x1, y1] = anchors[i + 1];
-
-          if (pct >= x0 && pct <= x1) {
-            return y0 + ((pct - x0) / (x1 - x0)) * (y1 - y0);
+        {
+          label: 'Subject',
+          data: xs.map((_, i) => i === subjectIdx ? subjectPPA : null),
+          borderColor: '#D85A30',
+          backgroundColor: '#D85A30',
+          pointRadius: xs.map((_, i) => i === subjectIdx ? 7 : 0),
+          showLine: false, spanGaps: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: items => items[0].label + ' ac',
+            label: ctx => fmtPPA(ctx.parsed.y)
           }
         }
-
-        return 0;
-      }
-
-      function scoreTone(score) {
-        if (score >= 8) return "green";
-        if (score >= 6) return "blue";
-        if (score >= 4) return "yellow";
-        return "red";
-      }
-
-      function scoreColor(score) {
-        if (score >= 8) return "var(--green)";
-        if (score >= 6) return "var(--blue)";
-        if (score >= 4) return "var(--yellow)";
-        return "var(--red)";
-      }
-
-      function valuationVerdict(pct) {
-        if (pct < 15) return "Very low - hard to justify";
-        if (pct < 35) return "Below typical - good leverage";
-        if (pct < 48) return "Approaching sweet spot";
-        if (pct <= 52) return "Perfect - max leverage";
-        if (pct <= 65) return "Slightly above ideal";
-        if (pct <= 80) return "High - reduced room";
-        return "Very high - little spread";
-      }
-
-      function updateScore(prefix, value, mv) {
-        const pct = mv > 0 ? (value / mv) * 100 : 0;
-        const score = interpScore(pct);
-        const ring = $(`${prefix}ScoreRing`);
-        ring.textContent = score.toFixed(1);
-        ring.style.setProperty("--score", score.toFixed(2));
-        ring.style.setProperty("--ring", scoreColor(score));
-        $(`${prefix}Pct`).textContent = `${pct.toFixed(1)}%`;
-        $(`${prefix}Pct`).className = `pct-pill tone-${scoreTone(score)}`;
-        $(`${prefix}Verdict`).textContent = valuationVerdict(pct);
-      }
-
-      function maxOfferPct(mv) {
-        return 92.0 - 55.0 * Math.exp(-0.00161 * Math.pow(mv, 0.62));
-      }
-
-      function netProceedsPct(mv, realtorRate, closingCost) {
-        return (1 - realtorRate / 100) * 100 - (closingCost / mv) * 100;
-      }
-
-      function dealTier(mv) {
-        if (mv < 30000) {
-          return { label: "Micro", low: 0.4, high: 0.7, note: "MV under $30K; costs eat margin most" };
-        }
-        if (mv < 75000) {
-          return { label: "Small", low: 0.5, high: 0.75, note: "$30K-$75K; standard zone plus buffer" };
-        }
-        if (mv < 300000) {
-          return { label: "Standard", low: 0.5, high: 0.8, note: "$75K-$300K; core flexible zone" };
-        }
-        return { label: "Large", low: 0.5, high: 0.9, note: "$300K+; spread absorbs costs" };
-      }
-
-      function rubricRealtorRate(mv) {
-        if (mv <= 65000) return 8;
-        if (mv <= 100000) return 7;
-        if (mv <= 150000) return 6;
-        if (mv <= 250000) return 5;
-        return 4;
-      }
-
-      function selectedFormula() {
-        const select = $("countyFormula");
-
-        if (select.value === "master" && masterFormulaRecord?.coeff && masterFormulaRecord?.exponent) {
-          return {
-            coeff: masterFormulaRecord.coeff,
-            exponent: masterFormulaRecord.exponent,
-            label: `${masterFormulaRecord.county}, ${masterFormulaRecord.state} master sheet`,
-            source: "master",
-            record: masterFormulaRecord,
-          };
-        }
-
-        const index = Number(select.value);
-        return countyFormulas[Number.isFinite(index) ? index : 1] || countyFormulas[1];
-      }
-
-      function stateExists(state) {
-        return states.some(([abbr]) => abbr === state);
-      }
-
-      function normalizeCountyName(value) {
-        return String(value || "")
-          .trim()
-          .replace(/\s+county$/i, "");
-      }
-
-      function countiesForState(state) {
-        const manual = countyLibrary[state] || [];
-        const master = (window.DCL_SUBDIVIDE_COUNTY_FORMULAS || [])
-          .filter((record) => record.state === state)
-          .map((record) => record.county)
-          .filter(Boolean);
-        const seen = new Set();
-
-        return [...manual, ...master]
-          .map(normalizeCountyName)
-          .filter(Boolean)
-          .filter((county) => {
-            const key = county.toLowerCase();
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-          })
-          .sort((a, b) => a.localeCompare(b));
-      }
-
-      function findMasterFormula(state, county) {
-        const cleanCounty = normalizeCountyName(county).toLowerCase();
-
-        return (window.DCL_SUBDIVIDE_COUNTY_FORMULAS || []).find((record) => {
-          return (
-            record.state === state &&
-            normalizeCountyName(record.county).toLowerCase() === cleanCounty &&
-            Number.isFinite(record.coeff) &&
-            Number.isFinite(record.exponent)
-          );
-        }) || null;
-      }
-
-      function syncCountyFormulaFromLocation() {
-        const state = $("propertyStateSelect").value || (text("propertyState") || "TX").toUpperCase();
-        const county = $("propertyCountySelect").value || text("propertyCounty");
-        const select = $("countyFormula");
-        const existing = select.querySelector('option[value="master"]');
-        const record = findMasterFormula(state, county);
-
-        masterFormulaRecord = record;
-
-        if (!record) {
-          if (existing) {
-            existing.remove();
-          }
-          if (select.value === "master") {
-            select.value = "1";
-          }
-          return;
-        }
-
-        const label = `Master sheet: ${record.county}, ${record.state} ${record.coeff} * ac^${record.exponent}`;
-        const option = existing || document.createElement("option");
-        option.value = "master";
-        option.textContent = label;
-
-        if (!existing) {
-          select.insertBefore(option, select.firstChild);
-        }
-
-        select.value = "master";
-      }
-
-      function populateCountySelect(state, selectedCounty = "") {
-        const select = $("propertyCountySelect");
-        const normalizedSelected = normalizeCountyName(selectedCounty);
-        const counties = countiesForState(state);
-        const options = [...counties];
-
-        if (
-          normalizedSelected &&
-          !options.some((county) => county.toLowerCase() === normalizedSelected.toLowerCase())
-        ) {
-          options.unshift(normalizedSelected);
-        }
-
-        select.innerHTML = "";
-
-        if (!options.length) {
-          const option = document.createElement("option");
-          option.value = "";
-          option.textContent = "Other county - edit below";
-          select.appendChild(option);
-          return;
-        }
-
-        options.forEach((county) => {
-          const option = document.createElement("option");
-          option.value = county;
-          option.textContent = `${county} County`;
-          select.appendChild(option);
-        });
-
-        const otherOption = document.createElement("option");
-        otherOption.value = "";
-        otherOption.textContent = "Other county - edit below";
-        select.appendChild(otherOption);
-
-        const matchedCounty = options.find(
-          (county) => county.toLowerCase() === normalizedSelected.toLowerCase(),
-        );
-        select.value = matchedCounty || options[0] || "";
-      }
-
-      function syncLocationControlsToFields() {
-        const state = $("propertyStateSelect").value || "TX";
-        const county = $("propertyCountySelect").value;
-
-        $("propertyState").value = state;
-
-        if (county) {
-          $("propertyCounty").value = county;
-        }
-
-        syncCountyFormulaFromLocation();
-      }
-
-      function syncLocationFieldsToControls() {
-        const state = (text("propertyState") || "TX").toUpperCase();
-        const safeState = stateExists(state) ? state : "TX";
-
-        $("propertyStateSelect").value = safeState;
-        populateCountySelect(safeState, text("propertyCounty"));
-        syncCountyFormulaFromLocation();
-      }
-
-      function curve(acres, formula = selectedFormula()) {
-        if (!Number.isFinite(acres) || acres <= 0) return 0;
-        return formula.coeff * Math.pow(acres, formula.exponent);
-      }
-
-      function classifyExponent(exponent) {
-        if (exponent <= -0.4) {
-          return {
-            label: "Subdividable",
-            heading: "Strong split upside",
-            tone: "green",
-            detail: "Smaller lots should price meaningfully above the whole-parcel curve.",
-          };
-        }
-        if (exponent <= -0.35) {
-          return {
-            label: "Semi-subdividable",
-            heading: "Possible split upside",
-            tone: "yellow",
-            detail: "There may be lift, but the curve is not steep enough to treat it as automatic.",
-          };
-        }
-        return {
-            label: "Non-subdividable",
-            heading: "Limited split upside",
-            tone: "red",
-            detail: "The curve is too flat to rely on smaller-lot pricing alone.",
-        };
-      }
-
-      function updateLotType() {
-        const config = lotTypes[$("lotType").value] || lotTypes.infill;
-        $("lotDescription").textContent = config.description;
-        $("lotTags").innerHTML = "";
-
-        config.tags.forEach((tag) => {
-          const chip = document.createElement("span");
-          chip.className = `chip ${config.tone}`;
-          chip.textContent = tag;
-          $("lotTags").appendChild(chip);
-        });
-      }
-
-      function updateHeader() {
-        const propertyCounty = text("propertyCounty") || "Taylor";
-        const propertyState = (text("propertyState") || "TX").toUpperCase();
-        const ownerCounty = text("ownerCounty");
-        const ownerState = (text("ownerState") || "").toUpperCase();
-        const acres = num("deededAcres", 0);
-        const taxDelinquent = $("taxDelinquent").value === "yes";
-        const years = num("ownershipYears", 0);
-        const inState = ownerState === propertyState;
-        const inCounty = ownerCounty.toLowerCase() === propertyCounty.toLowerCase() && inState;
-
-        $("propertyState").value = propertyState;
-        $("ownerState").value = ownerState;
-        $("headerAddress").textContent = text("propertyAddress") || "Untitled parcel";
-        $("headerCounty").textContent = `${propertyCounty} County, ${propertyState}`;
-        $("headerApn").textContent = text("apn") || "-";
-        $("headerAcres").textContent = acres.toFixed(2);
-
-        setChip($("taxDelinquentChip"), taxDelinquent ? "Yes" : "No", taxDelinquent ? "red" : "green");
-        setChip($("familyTransferChip"), $("familyTransfer").value === "yes" ? "Yes" : "No", $("familyTransfer").value === "yes" ? "yellow" : "green");
-        setChip($("ownerStateChip"), inState ? "In-state" : "Out of state", inState ? "green" : "red");
-        setChip($("ownerCountyChip"), inCounty ? "In-county" : "Out of county", inCounty ? "green" : "yellow");
-        setChip($("headerTaxChip"), taxDelinquent ? "Tax delinquent" : "Tax current", taxDelinquent ? "red" : "green");
-        setChip($("headerOwnerChip"), inCounty ? "In county" : inState ? "Out of county" : "Out of state", inCounty ? "green" : inState ? "yellow" : "red");
-        setChip($("headerOwnershipChip"), `${Math.max(0, years).toFixed(0)} yr owner`, years >= 15 ? "blue" : "gray");
-      }
-
-      function updateAcreage() {
-        const deeded = num("deededAcres", 0);
-        const liCalc = num("liCalcAcres", 0);
-        const thresholdPct = deeded > 0 ? 54 * Math.pow(deeded, -0.376) : 0;
-        const minAcceptable = deeded * (1 - thresholdPct / 100);
-        const variancePct = deeded > 0 ? ((liCalc - deeded) / deeded) * 100 : 0;
-
-        $("acreageDiscrepancy").textContent = `${liCalc.toFixed(2)} ac vs ${deeded.toFixed(2)} ac (${variancePct >= 0 ? "+" : ""}${variancePct.toFixed(1)}%)`;
-        $("minAcceptableAcres").textContent = `${minAcceptable.toFixed(2)} ac (${thresholdPct.toFixed(1)}% tolerance)`;
-
-        if (liCalc >= minAcceptable * 1.15) {
-          setChip($("surveyFlag"), "Normal", "green");
-        } else if (liCalc >= minAcceptable) {
-          setChip($("surveyFlag"), "Watch zone - note it", "yellow");
-        } else {
-          setChip($("surveyFlag"), "Hard flag - survey recommended", "red");
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Acreage', color: '#8a8a87', font: {size: 10}},
+          ticks: { color: '#8a8a87', font: {size: 10}, maxTicksLimit: 8 },
+          grid:  { color: 'rgba(0,0,0,.04)' }
+        },
+        y: {
+          title: { display: true, text: '$ / acre', color: '#8a8a87', font: {size: 10}},
+          ticks: {
+            color: '#8a8a87', font: {size: 10},
+            callback: v => '$' + (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v)
+          },
+          grid:  { color: 'rgba(0,0,0,.04)' }
         }
       }
+    }
+  });
+}
 
-      function updateMarketAnchor() {
-        const mv = num("mvInput", 0);
-        const acres = num("deededAcres", 0);
-        const autoRate = $("autoRealtorRate").checked;
-        const realtorRate = autoRate ? rubricRealtorRate(mv) : num("realtorRate", 5);
-        const closingCost = num("closingCost", 2500);
-        const tier = dealTier(mv);
-        const ppa = acres > 0 ? mv / acres : 0;
-        const offerLow = mv * tier.low;
-        const offerHigh = mv * tier.high;
-        const maxPct = mv > 0 ? maxOfferPct(mv) : 0;
-        const maxOffer = mv * (maxPct / 100);
-        const netPct = mv > 0 ? netProceedsPct(mv, realtorRate, closingCost) : 0;
-        const netProceeds = mv * (netPct / 100);
-        const profit = netProceeds - maxOffer;
+/* ---------- Update Splits ---------- */
+function updateSplits(subjectAcres) {
+  const subjectPPA = pricePerAc(subjectAcres);
+  for (const n of [2,3,4,5]) {
+    const lotPPA = pricePerAc(subjectAcres / n);
+    const mult = lotPPA / subjectPPA;
+    document.getElementById('split-' + n + '-ppa').textContent  = fmtPPA(lotPPA);
+    document.getElementById('split-' + n + '-mult').textContent = mult.toFixed(2) + '×';
+    const card = document.getElementById('split-' + n);
+    card.classList.toggle('is-weak', mult < 2);
+  }
+}
 
-        if (autoRate) {
-          $("realtorRate").value = realtorRate.toFixed(1).replace(/\.0$/, "");
-        }
+/* ---------- Update Acreage Intel ---------- */
+function updateAcreage() {
+  const deeded = parseFloat(document.getElementById('deeded-in').value) || 0;
+  const liCalc = parseFloat(document.getElementById('licalc-in').value) || 0;
+  const variancePct = deeded > 0 ? ((deeded - liCalc) / deeded) * 100 : 0;
+  document.getElementById('acreage-variance').textContent =
+    (variancePct >= 0 ? '−' : '+') + Math.abs(variancePct).toFixed(1) + '%  (' + (deeded - liCalc).toFixed(2) + ' ac)';
+  document.getElementById('acreage-disc').textContent = 'Deeded vs. LI calc';
 
-        $("marketValueDisplay").textContent = formatMoney(mv);
-        $("pricePerAcreDisplay").textContent = formatPpa(ppa);
-        $("offerRangeDisplay").textContent = `${formatMoney(offerLow)} - ${formatMoney(offerHigh)}`;
-        $("offerRangeDetail").textContent = `${tier.label} tier: ${(tier.low * 100).toFixed(0)}% to ${(tier.high * 100).toFixed(0)}% of MV - ${tier.note}`;
-        $("maxOfferDisplay").textContent = formatMoney(maxOffer);
-        $("maxOfferPctDisplay").textContent = `${maxPct.toFixed(1)}% of MV`;
-        $("profitDisplay").textContent = formatMoney(profit);
-        $("profitBreakdown").textContent = `${formatMoney(netProceeds)} net at ${netPct.toFixed(1)}% after ${realtorRate.toFixed(1).replace(/\.0$/, "")}% realtor + ${formatMoney(closingCost)} closing, minus ${formatMoney(maxOffer)} max offer`;
+  const flag = surveyFlag(deeded, liCalc);
+  const note = document.getElementById('flag-note');
+  note.className = 'flag-note';
+  if (flag.level === 'hard') {
+    note.classList.add('red');
+    note.innerHTML = '<strong>⚑ Survey recommended</strong> · LI calc is below the size-adjusted threshold (' + flag.minAc.toFixed(2) + ' ac min, ' + flag.thresholdPct.toFixed(1) + '% variance allowed).';
+  } else if (flag.level === 'watch') {
+    note.classList.add('yellow');
+    note.innerHTML = '<strong>△ Watch zone</strong> · LI calc is within 15% of the survey threshold (min ' + flag.minAc.toFixed(2) + ' ac).';
+  }
+  return deeded;
+}
 
-        return { mv, acres, ppa, maxOffer, profit, realtorRate, closingCost, tier };
-      }
+/* ---------- Update Valuation Scores ---------- */
+function updateScores(mv) {
+  const av  = parseFloat(document.getElementById('av-in').value)  || 0;
+  const mlv = parseFloat(document.getElementById('mlv-in').value) || 0;
 
-      function chartData(acres, ppa) {
-        const formula = selectedFormula();
-        const curvePoints = [];
-        const doublePoints = [];
+  const avPct  = mv > 0 ? (av  / mv) * 100 : 0;
+  const mlvPct = mv > 0 ? (mlv / mv) * 100 : 0;
+  const avScore  = interpScore(avPct);
+  const mlvScore = interpScore(mlvPct);
 
-        for (let ac = 1; ac <= 120; ac += 1) {
-          curvePoints.push({ x: ac, y: curve(ac, formula) });
-          doublePoints.push({ x: ac, y: ppa * 2 });
-        }
+  document.getElementById('av-pct').textContent  = avPct.toFixed(1)  + '% of MV';
+  document.getElementById('mlv-pct').textContent = mlvPct.toFixed(1) + '% of MV';
+  document.getElementById('av-verdict').textContent  = verdictText(avPct);
+  document.getElementById('mlv-verdict').textContent = verdictText(mlvPct);
 
-        return {
-          curvePoints,
-          doublePoints,
-          subjectPoint: [{ x: Math.max(1, acres), y: ppa }],
-        };
-      }
+  renderRing('av-ring', avScore);
+  renderRing('mlv-ring', mlvScore);
+}
 
-      function cssVar(name) {
-        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-      }
+/* ---------- Update Subdivide Banner ---------- */
+function updateSubdivideBanner() {
+  const { cls, color } = classifySubdivide(EXP);
+  const banner = document.getElementById('subdiv-banner');
+  banner.className = 'subdiv-banner ' + color;
+  document.getElementById('subdiv-text').textContent =
+    cls + ' — exponent ' + EXP.toFixed(2) + ' (threshold −0.40)';
+}
 
-      function drawFallbackChart(canvas, data, acres, ppa) {
-        const rect = canvas.getBoundingClientRect();
-        const ratio = window.devicePixelRatio || 1;
-        const width = Math.max(320, rect.width);
-        const height = Math.max(260, rect.height);
-        const ctx = canvas.getContext("2d");
-        const allY = [
-          ...data.curvePoints.map((point) => point.y),
-          ...data.doublePoints.map((point) => point.y),
-          ppa,
-        ];
-        const yMax = Math.max(1000, Math.ceil(Math.max(...allY) / 1000) * 1000);
-        const pad = { top: 22, right: 22, bottom: 42, left: 64 };
-        const plotW = width - pad.left - pad.right;
-        const plotH = height - pad.top - pad.bottom;
-        const xScale = (value) => pad.left + ((value - 1) / 119) * plotW;
-        const yScale = (value) => pad.top + plotH - (value / yMax) * plotH;
+/* ---------- MV-dependent money math (never touches the trend line) ---------- */
+function updateMoney() {
+  const mv    = parseFloat(document.getElementById('mv-input').value)   || 0;
+  const rate  = parseFloat(document.getElementById('rate-input').value) || 3;
+  const acres = parseFloat(document.getElementById('deeded-in').value)  || 0;
 
-        canvas.width = width * ratio;
-        canvas.height = height * ratio;
-        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-        ctx.clearRect(0, 0, width, height);
+  // Market anchor
+  document.getElementById('b-total').textContent = fmt(mv);
+  document.getElementById('b-ppa').textContent   = acres > 0 ? fmtPPA(mv / acres) : '—';
+  document.getElementById('b-offer-range').textContent = fmt(mv * 0.50) + ' – ' + fmt(mv * 0.70);
 
-        ctx.fillStyle = cssVar("--panel-soft") || "#f8fafc";
-        ctx.fillRect(0, 0, width, height);
-        ctx.strokeStyle = "rgba(101, 114, 127, 0.18)";
-        ctx.lineWidth = 1;
-        ctx.font = "12px Inter, system-ui, sans-serif";
-        ctx.fillStyle = cssVar("--muted") || "#65727f";
+  // Max offer f(MV)
+  const fPct = fOffer(mv);
+  const maxOffer = mv * fPct / 100;
+  document.getElementById('b-maxoffer').textContent     = fmt(maxOffer);
+  document.getElementById('b-maxoffer-pct').textContent = fPct.toFixed(1) + '% of MV';
 
-        for (let i = 0; i <= 4; i += 1) {
-          const y = pad.top + (plotH / 4) * i;
-          const value = yMax - (yMax / 4) * i;
-          ctx.beginPath();
-          ctx.moveTo(pad.left, y);
-          ctx.lineTo(width - pad.right, y);
-          ctx.stroke();
-          ctx.fillText(formatPpa(value).replace("/ac", ""), 10, y + 4);
-        }
+  // Net proceeds g(MV), profit
+  const gPct = gNet(mv, rate);
+  const net = mv * gPct / 100;
+  const profit = net - maxOffer;
+  document.getElementById('b-profit').textContent = fmt(profit);
 
-        [1, 30, 60, 90, 120].forEach((tick) => {
-          const x = xScale(tick);
-          ctx.beginPath();
-          ctx.moveTo(x, pad.top);
-          ctx.lineTo(x, pad.top + plotH);
-          ctx.stroke();
-          ctx.fillText(String(tick), x - 8, height - 14);
-        });
+  // Scores
+  updateScores(mv);
+}
 
-        ctx.beginPath();
-        data.curvePoints.forEach((point, index) => {
-          const x = xScale(point.x);
-          const y = yScale(point.y);
-          if (index === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        });
-        ctx.lineTo(xScale(120), yScale(0));
-        ctx.lineTo(xScale(1), yScale(0));
-        ctx.closePath();
-        ctx.fillStyle = "rgba(83, 74, 183, 0.14)";
-        ctx.fill();
+/* ---------- Acreage-driven trend line (independent of MV) ---------- */
+function updateTrend() {
+  const acres = parseFloat(document.getElementById('deeded-in').value) || 0;
+  if (acres > 0) {
+    buildChart(acres);
+    updateSplits(acres);
+  }
+}
 
-        ctx.beginPath();
-        data.curvePoints.forEach((point, index) => {
-          const x = xScale(point.x);
-          const y = yScale(point.y);
-          if (index === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        });
-        ctx.strokeStyle = cssVar("--purple") || "#534ab7";
-        ctx.lineWidth = 2;
-        ctx.setLineDash([]);
-        ctx.stroke();
+/* ---------- Full refresh (init + acreage changes only) ---------- */
+function updateAll() {
+  updateAcreage();   // variance % + survey flag
+  updateMoney();     // MV-dependent dollar math + scores
+  updateTrend();     // acreage-driven curve + splits
+}
 
-        const thresholdY = yScale(ppa * 2);
-        ctx.beginPath();
-        ctx.moveTo(pad.left, thresholdY);
-        ctx.lineTo(width - pad.right, thresholdY);
-        ctx.strokeStyle = cssVar("--green") || "#1d9e75";
-        ctx.lineWidth = 2;
-        ctx.setLineDash([8, 6]);
-        ctx.stroke();
+/* ---------- MV sourced from LandInsight figures ---------- */
+const mvInput       = document.getElementById('mv-input');
+const mvRevert      = document.getElementById('mv-revert');
+const mvSourceField = document.getElementById('mv-source-field');
+const mvRatio       = document.getElementById('mv-ratio');
+const mvSourcedEl   = document.getElementById('mv-sourced');
 
-        const dotX = xScale(Math.max(1, Math.min(120, acres)));
-        const dotY = yScale(ppa);
-        ctx.setLineDash([]);
-        ctx.beginPath();
-        ctx.arc(dotX, dotY, 6, 0, Math.PI * 2);
-        ctx.fillStyle = cssVar("--coral") || "#d85a30";
-        ctx.fill();
+// MV = (selected LandInsight figure) ÷ (target ratio).  Default: Market Land Value at 50% of MV.
+function computeSourcedMV() {
+  const av    = parseFloat(document.getElementById('av-in').value)  || 0;
+  const mlv   = parseFloat(document.getElementById('mlv-in').value) || 0;
+  const base  = mvSourceField.value === 'av' ? av : mlv;
+  const ratio = (parseFloat(mvRatio.value) || 0) / 100;
+  return ratio > 0 ? base / ratio : 0;
+}
 
-        ctx.fillStyle = cssVar("--muted") || "#65727f";
-        ctx.fillText("Fallback canvas chart", pad.left, 16);
-        ctx.fillText("Lot size (acres)", width / 2 - 40, height - 14);
-      }
+// Refresh the sourced display + toggle the Revert button (shown when MV diverges from source)
+function refreshSourced() {
+  const sourced = computeSourcedMV();
+  mvSourcedEl.textContent = fmt(sourced);
+  mvRevert.hidden = Math.round(parseFloat(mvInput.value) || 0) === Math.round(sourced);
+  return sourced;
+}
 
-      function updateChart(acres, ppa) {
-        const ctx = $("pricePulseChart");
-        const data = chartData(acres, ppa);
+// Revert restores MV to the current LandInsight-sourced value — trend line left untouched
+mvRevert.addEventListener('click', () => {
+  mvInput.value = String(Math.round(computeSourcedMV()));
+  updateMoney();
+  refreshSourced();
+});
 
-        if (!window.Chart) {
-          drawFallbackChart(ctx, data, acres, ppa);
-          return;
-        }
+/* ---------- Event Wiring ---------- */
+// MV / rate drive dollar math + scores only — NOT the trend line
+mvInput.addEventListener('input', () => { updateMoney(); refreshSourced(); });
+document.getElementById('rate-input').addEventListener('input', updateMoney);
+// AV / MLV feed both the valuation scores AND the LandInsight-sourced MV baseline
+document.getElementById('av-in').addEventListener('input',  () => { updateMoney(); refreshSourced(); });
+document.getElementById('mlv-in').addEventListener('input', () => { updateMoney(); refreshSourced(); });
+// Source figure + target ratio recompute the sourced baseline only
+mvSourceField.addEventListener('change', refreshSourced);
+mvRatio.addEventListener('input', refreshSourced);
+// Acreage changes recompute everything, including the trend line
+document.getElementById('deeded-in').addEventListener('input', updateAll);
+document.getElementById('licalc-in').addEventListener('input', updateAll);
+document.getElementById('proximity-select').addEventListener('change', renderProximity);
 
-        if (!pricePulseChart) {
-          pricePulseChart = new Chart(ctx, {
-            type: "line",
-            data: {
-              datasets: [
-                {
-                  label: "$/ac curve",
-                  data: data.curvePoints,
-                  borderColor: "#534AB7",
-                  backgroundColor: "rgba(83, 74, 183, 0.14)",
-                  fill: true,
-                  pointRadius: 0,
-                  borderWidth: 2,
-                  tension: 0.25,
-                },
-                {
-                  label: "Double your money threshold",
-                  data: data.doublePoints,
-                  borderColor: "#1D9E75",
-                  borderDash: [8, 6],
-                  pointRadius: 0,
-                  borderWidth: 2,
-                },
-                {
-                  label: "Subject parcel",
-                  data: data.subjectPoint,
-                  showLine: false,
-                  borderColor: "#D85A30",
-                  backgroundColor: "#D85A30",
-                  pointRadius: 6,
-                  pointHoverRadius: 7,
-                },
-              ],
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              animation: false,
-              interaction: {
-                mode: "nearest",
-                intersect: false,
-              },
-              parsing: false,
-              scales: {
-                x: {
-                  type: "linear",
-                  min: 1,
-                  max: 120,
-                  title: {
-                    display: true,
-                    text: "Lot size (acres)",
-                  },
-                  grid: {
-                    color: "rgba(101, 114, 127, 0.16)",
-                  },
-                },
-                y: {
-                  title: {
-                    display: true,
-                    text: "$/acre",
-                  },
-                  ticks: {
-                    callback: (value) => formatPpa(Number(value)).replace("/ac", ""),
-                  },
-                  grid: {
-                    color: "rgba(101, 114, 127, 0.16)",
-                  },
-                },
-              },
-              plugins: {
-                legend: {
-                  labels: {
-                    usePointStyle: true,
-                    boxWidth: 8,
-                  },
-                },
-                tooltip: {
-                  callbacks: {
-                    label: (context) => `${context.dataset.label}: ${formatPpa(context.parsed.y)}`,
-                  },
-                },
-              },
-            },
-          });
-        } else {
-          pricePulseChart.data.datasets[0].data = data.curvePoints;
-          pricePulseChart.data.datasets[1].data = data.doublePoints;
-          pricePulseChart.data.datasets[2].data = data.subjectPoint;
-          pricePulseChart.update("none");
-        }
-      }
+/* ---------- Initial Render ---------- */
+updateSubdivideBanner();
+renderProximity();
+mvInput.value = String(Math.round(computeSourcedMV()));  // seed MV from LandInsight on load
+updateAll();
+refreshSourced();
+</script>
 
-      function updateSubdivide(acres, ppa) {
-        const formula = selectedFormula();
-        const classification = classifyExponent(formula.exponent);
-        const wholeCurvePpa = curve(acres, formula);
-        const splitGrid = $("splitGrid");
-        const splitResults = [2, 3, 4, 5].map((count) => {
-          const lotSize = acres / count;
-          const splitPpa = curve(lotSize, formula);
-          const multiplier = wholeCurvePpa > 0 ? splitPpa / wholeCurvePpa : 0;
-          return { count, lotSize, splitPpa, multiplier };
-        });
-        const best = splitResults.reduce((max, item) => (item.multiplier > max.multiplier ? item : max), splitResults[0]);
-
-        setChip($("classificationChip"), classification.label, classification.tone);
-        $("classificationTitle").textContent = classification.heading;
-        $("classificationDetail").textContent = `${classification.detail} Best case here: ${best.count} lots at ${best.lotSize.toFixed(2)} ac each, a ${best.multiplier.toFixed(2)}x PPA lift.`;
-        $("bestSplitUpside").textContent = `${best.multiplier.toFixed(2)}x`;
-        $("classificationBanner").className = `banner tone-${classification.tone}`;
-        $("countyFormulaMeta").textContent =
-          formula.source === "master" && formula.record
-            ? `Master sheet reference: ${formula.record.county}, ${formula.record.state}; formula ${formula.record.coeff} * ac^${formula.record.exponent}; acreage ${formula.record.acreage || "not specified"}; ${formula.record.subAcreage || "start acreage not specified"}; ${formula.record.notes || "no notes"}${formula.record.r2 ? `; R2 ${Number(formula.record.r2).toFixed(3)}` : ""}.`
-            : `Default formula library: ${formula.coeff} * ac^${formula.exponent}. Select a state/county with master-sheet data to auto-load its curve.`;
-
-        splitGrid.innerHTML = "";
-        splitResults.forEach((item) => {
-          const card = document.createElement("div");
-          card.className = `split-card ${item.multiplier >= 2 ? "is-good" : ""}`;
-          card.innerHTML = `
-            <span class="split-title">${item.count} lots</span>
-            <span class="split-main">${item.lotSize.toFixed(2)} ac / lot</span>
-            <span class="micro-copy">Curve price: ${formatPpa(item.splitPpa)}</span>
-            <span class="split-lift ${item.multiplier >= 2 ? "is-good" : ""}">
-              <strong>${item.multiplier.toFixed(2)}x</strong>
-              <span>PPA lift</span>
-            </span>
-          `;
-          splitGrid.appendChild(card);
-        });
-      }
-
-      function strongestLevers() {
-        const levers = [];
-        const taxDelinquent = $("taxDelinquent").value === "yes";
-        const backTaxes = num("backTaxes", 0);
-        const years = num("ownershipYears", 0);
-        const familyTransfer = $("familyTransfer").value === "yes";
-        const ownerStateLabel = $("ownerStateChip").textContent;
-        const ownerCountyLabel = $("ownerCountyChip").textContent;
-        const surveyLabel = $("surveyFlag").textContent;
-
-        if (taxDelinquent || backTaxes > 0) {
-          levers.push(`Back taxes: ${taxDelinquent ? "tax delinquent" : "tax status needs review"} with ${formatMoney(backTaxes)} due.`);
-        }
-        if (/Hard flag|Watch zone/i.test(surveyLabel)) {
-          levers.push(`Acreage discrepancy: ${$("acreageDiscrepancy").textContent}; ${surveyLabel}.`);
-        }
-        if (/Out/i.test(ownerStateLabel) || /Out/i.test(ownerCountyLabel)) {
-          levers.push(`Owner proximity: ${ownerCountyLabel}, ${ownerStateLabel}; clean-close value matters.`);
-        }
-        if (years >= 15) {
-          levers.push(`Long ownership: ${years.toFixed(0)} years, likely detached from day-to-day market.`);
-        }
-        if (familyTransfer) {
-          levers.push("Family transfer: heirs or family owners may be less emotionally invested in current market pricing.");
-        }
-
-        return levers;
-      }
-
-      function buildCounterPrompt() {
-        const anchor = updateMarketAnchor();
-        const formula = selectedFormula();
-        const classification = classifyExponent(formula.exponent);
-        const typedPoint = text("negotiationPoint");
-        const context = [
-          `Property: ${text("propertyAddress") || "Unknown address"}, ${text("propertyCounty")} County, ${(text("propertyState") || "").toUpperCase()}, APN ${text("apn") || "unknown"}.`,
-          `Acreage: ${num("deededAcres", 0).toFixed(2)} deeded acres; LandInsight calc ${num("liCalcAcres", 0).toFixed(2)} acres; ${$("surveyFlag").textContent}.`,
-          `Tax: ${$("taxDelinquent").value === "yes" ? "tax delinquent" : "not tax delinquent"}; back taxes ${formatMoney(num("backTaxes", 0))}; annual tax ${formatMoney(num("annualTax", 0))}/yr.`,
-          `Ownership: ${num("ownershipYears", 0).toFixed(0)} years; family transfer ${$("familyTransfer").value}.`,
-          `Owner location: ${text("ownerLocation")}; ${$("ownerCountyChip").textContent}; ${$("ownerStateChip").textContent}.`,
-          `MV (operator comp): ${formatMoney(anchor.mv)}; offer tier: ${anchor.tier.label} (${(anchor.tier.low * 100).toFixed(0)}%-${(anchor.tier.high * 100).toFixed(0)}% of MV); max offer: ${formatMoney(anchor.maxOffer)}; estimated profit: ${formatMoney(anchor.profit)} after ${anchor.realtorRate.toFixed(1).replace(/\.0$/, "")}% realtor and ${formatMoney(anchor.closingCost)} closing cost.`,
-          `Internal subdivide status: ${classification.label}. Do not mention subdivide potential to seller.`,
-          `Operator negotiation point: ${typedPoint || "No extra point provided."}`,
-        ];
-
-        lastCounterPrompt = [
-          "Write a confident, empathetic, non-salesy negotiation script for a land seller.",
-          "Use the strongest appropriate levers in this order: back taxes as empathy and ticking clock, acreage discrepancy as a survey conversation, out-of-state/out-of-county clean-close value, long ownership, family transfer.",
-          "Never mention subdivide potential to the seller.",
-          "Keep it concise, human, and suitable for a call or SMS follow-up.",
-          "",
-          "Parcel context:",
-          ...context.map((item) => `- ${item}`),
-        ].join("\n");
-
-        return lastCounterPrompt;
-      }
-
-      function localCounterScript() {
-        const anchor = updateMarketAnchor();
-        const point = text("negotiationPoint");
-        const levers = strongestLevers();
-        const firstLever = levers[0] || "I want to keep this simple and give you certainty without dragging the process out.";
-        const secondLever = levers[1] || "There are still a few facts I need to verify before I can stretch on price.";
-
-        return [
-          "I appreciate you walking through this with me. I can see why you are anchoring higher, and I do not want to dismiss that. My number is coming from the clean-close side of the deal, not from trying to win an argument over value.",
-          "",
-          `${firstLever} ${secondLever}`,
-          "",
-          point
-            ? `The piece I am weighing most is this: ${point}`
-            : "The piece I am weighing most is the gap between a clean, certain sale and a retail number that still depends on verification.",
-          "",
-          `Based on the acreage, taxes, and my MV comp, the most I can responsibly be at is around ${formatMoney(anchor.maxOffer)}. If that gives you enough certainty, I can keep the process straightforward, handle the paperwork cleanly, and move without turning this into a long listing process.`,
-          "",
-          "If that is too far off, I understand. I would rather be clear with you now than overpromise and retrade later.",
-        ].join("\n");
-      }
-
-      async function generateCounter() {
-        const prompt = buildCounterPrompt();
-        $("counterPromptOutput").textContent = prompt;
-        $("counterOutput").textContent = "Drafting...";
-
-        const endpoint = window.DEWCLAW_COUNTER_ENDPOINT;
-        if (endpoint) {
-          try {
-            const response = await fetch(endpoint, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                model: "claude-sonnet-4",
-                max_tokens: 1000,
-                prompt,
-              }),
-            });
-            const payload = await response.json();
-            if (!response.ok) {
-              throw new Error(payload.error || `Counter endpoint failed with ${response.status}`);
-            }
-            $("counterOutput").textContent = payload.text || payload.response || localCounterScript();
-            return;
-          } catch (error) {
-            $("counterOutput").textContent = `${localCounterScript()}\n\nCounter endpoint note: ${error instanceof Error ? error.message : "request failed"}`;
-            return;
-          }
-        }
-
-        $("counterOutput").textContent = localCounterScript();
-      }
-
-      function updateAll() {
-        updateHeader();
-        updateAcreage();
-        updateLotType();
-
-        const anchor = updateMarketAnchor();
-        updateScore("assessed", num("assessedValue", 0), anchor.mv);
-        updateScore("marketLand", num("marketLandValue", 0), anchor.mv);
-        updateSubdivide(anchor.acres, anchor.ppa);
-        updateChart(anchor.acres, anchor.ppa);
-        $("counterPromptOutput").textContent = buildCounterPrompt();
-      }
-
-      function initializeFormulaSelect() {
-        const select = $("countyFormula");
-        countyFormulas.forEach((formula, index) => {
-          const option = document.createElement("option");
-          option.value = String(index);
-          option.textContent = formula.label;
-          option.selected = Boolean(formula.default);
-          select.appendChild(option);
-        });
-      }
-
-      function initializeLocationSelects() {
-        const select = $("propertyStateSelect");
-        states.forEach(([abbr, name]) => {
-          const option = document.createElement("option");
-          option.value = abbr;
-          option.textContent = `${abbr} - ${name}`;
-          option.selected = abbr === (text("propertyState") || "TX").toUpperCase();
-          select.appendChild(option);
-        });
-
-        if (!select.value) {
-          select.value = "TX";
-        }
-
-        populateCountySelect(select.value, text("propertyCounty") || "Taylor");
-        syncLocationControlsToFields();
-      }
-
-      function bindEvents() {
-        document.querySelectorAll("input, select, textarea").forEach((el) => {
-          if (el.id === "negotiationPoint") {
-            el.addEventListener("input", () => {
-              $("counterPromptOutput").textContent = buildCounterPrompt();
-            });
-          } else if (el.id === "propertyStateSelect") {
-            el.addEventListener("change", () => {
-              populateCountySelect(el.value);
-              syncLocationControlsToFields();
-              updateAll();
-            });
-          } else if (el.id === "propertyCountySelect") {
-            el.addEventListener("change", () => {
-              syncLocationControlsToFields();
-              updateAll();
-            });
-          } else if (el.id === "propertyState" || el.id === "propertyCounty") {
-            el.addEventListener("input", () => {
-              syncLocationFieldsToControls();
-              updateAll();
-            });
-            el.addEventListener("change", () => {
-              syncLocationFieldsToControls();
-              updateAll();
-            });
-          } else {
-            el.addEventListener("input", updateAll);
-            el.addEventListener("change", updateAll);
-          }
-        });
-
-        $("generateCounter").addEventListener("click", generateCounter);
-        $("copyCounterPrompt").addEventListener("click", async () => {
-          const prompt = lastCounterPrompt || buildCounterPrompt();
-          try {
-            await navigator.clipboard.writeText(prompt);
-            $("copyCounterPrompt").innerHTML = '<i data-lucide="check"></i>Copied';
-            window.lucide?.createIcons();
-            setTimeout(() => {
-              $("copyCounterPrompt").innerHTML = '<i data-lucide="copy"></i>Copy prompt';
-              window.lucide?.createIcons();
-            }, 1200);
-          } catch {
-            $("counterPromptOutput").textContent = prompt;
-          }
-        });
-      }
-
-      initializeFormulaSelect();
-      initializeLocationSelects();
-      bindEvents();
-      updateAll();
-      generateCounter();
-      window.lucide?.createIcons();
-    </script>
-  </body>
+</body>
 </html>
