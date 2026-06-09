@@ -278,6 +278,15 @@ body {
 }
 .mv-source-eq { margin-left: auto; color: var(--color-text-secondary); }
 .mv-source-eq strong { color: var(--color-text-primary); font-size: 13px; }
+.mv-fub-status {
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: var(--border-radius-md);
+}
+.mv-fub-status.ok  { background: var(--color-background-success); color: var(--color-text-success); }
+.mv-fub-status.err { background: var(--color-background-danger);  color: var(--color-text-danger);  }
 
 /* ---------- Market Anchor 2×2 ---------- */
 .anchor-grid {
@@ -650,12 +659,11 @@ body {
           <option value="mlv" selected>Market Land Value</option>
           <option value="av">Assessed Value</option>
         </select>
-        <span>at</span>
-        <input type="number" id="mv-ratio" class="mv-ratio-input" value="50" step="1" min="1" max="100">
-        <span>% of MV</span>
+        <span id="mv-ratio-controls">at <input type="number" id="mv-ratio" class="mv-ratio-input" value="50" step="1" min="1" max="100">% of MV</span>
         <span class="mv-source-eq">→ <strong id="mv-sourced">$116,000</strong></span>
       </div>
-      <div class="mv-hint">MV is sourced from the LandInsight figure ÷ your target ratio (50% = the valuation sweet spot). Edit freely for what-if pricing; <em>Revert</em> restores the sourced figure. The subdivide trend line is acreage-based and is never affected by MV.</div>
+      <div class="mv-fub-status" id="mv-fub-status" hidden></div>
+      <div class="mv-hint">MV is sourced from the Follow Up Boss deal when embedded, otherwise from the LandInsight figure ÷ your target ratio (50% = the valuation sweet spot). Edit freely for what-if pricing; <em>Revert</em> restores the sourced figure. The subdivide trend line is acreage-based and is never affected by MV.</div>
     </div>
 
     <!-- 3. Market Anchor -->
@@ -992,20 +1000,30 @@ function updateAll() {
   updateTrend();     // acreage-driven curve + splits
 }
 
-/* ---------- MV sourced from LandInsight figures ---------- */
+/* ---------- MV sourcing: Follow Up Boss deal (primary) → LandInsight (fallback) ---------- */
 const mvInput       = document.getElementById('mv-input');
 const mvRevert      = document.getElementById('mv-revert');
 const mvSourceField = document.getElementById('mv-source-field');
 const mvRatio       = document.getElementById('mv-ratio');
 const mvSourcedEl   = document.getElementById('mv-sourced');
+const mvRatioCtrls  = document.getElementById('mv-ratio-controls');
+const mvFubStatus   = document.getElementById('mv-fub-status');
 
-// MV = (selected LandInsight figure) ÷ (target ratio).  Default: Market Land Value at 50% of MV.
+let fubSourcedMV = null;   // set when embedded in Follow Up Boss and a deal value is found
+
+// Sourced MV: the FUB deal value when that source is active, else LandInsight figure ÷ target ratio.
 function computeSourcedMV() {
+  if (mvSourceField.value === 'fub') return fubSourcedMV || 0;
   const av    = parseFloat(document.getElementById('av-in').value)  || 0;
   const mlv   = parseFloat(document.getElementById('mlv-in').value) || 0;
   const base  = mvSourceField.value === 'av' ? av : mlv;
   const ratio = (parseFloat(mvRatio.value) || 0) / 100;
   return ratio > 0 ? base / ratio : 0;
+}
+
+// The ratio controls only apply to LandInsight sourcing — hide them for the FUB source.
+function updateSourceUI() {
+  mvRatioCtrls.style.display = (mvSourceField.value === 'fub') ? 'none' : '';
 }
 
 // Refresh the sourced display + toggle the Revert button (shown when MV diverges from source)
@@ -1016,7 +1034,7 @@ function refreshSourced() {
   return sourced;
 }
 
-// Revert restores MV to the current LandInsight-sourced value — trend line left untouched
+// Revert restores MV to the current sourced value — trend line left untouched
 mvRevert.addEventListener('click', () => {
   mvInput.value = String(Math.round(computeSourcedMV()));
   updateMoney();
@@ -1031,19 +1049,61 @@ document.getElementById('rate-input').addEventListener('input', updateMoney);
 document.getElementById('av-in').addEventListener('input',  () => { updateMoney(); refreshSourced(); });
 document.getElementById('mlv-in').addEventListener('input', () => { updateMoney(); refreshSourced(); });
 // Source figure + target ratio recompute the sourced baseline only
-mvSourceField.addEventListener('change', refreshSourced);
+mvSourceField.addEventListener('change', () => { updateSourceUI(); refreshSourced(); });
 mvRatio.addEventListener('input', refreshSourced);
 // Acreage changes recompute everything, including the trend line
 document.getElementById('deeded-in').addEventListener('input', updateAll);
 document.getElementById('licalc-in').addEventListener('input', updateAll);
 document.getElementById('proximity-select').addEventListener('change', renderProximity);
 
+/* ---------- Follow Up Boss embed: auto-fill MV from the Deal ---------- */
+async function initFubEmbed() {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.get('context') || !params.get('signature')) return;  // not embedded — keep LandInsight
+
+  try {
+    const res  = await fetch('/api/fub/deal' + window.location.search, { headers: { Accept: 'application/json' } });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+
+    const who = data.personName ? ' · ' + data.personName : '';
+    mvFubStatus.hidden = false;
+    mvFubStatus.className = 'mv-fub-status ok';
+
+    if (data.marketValue != null) {
+      if (!mvSourceField.querySelector('option[value="fub"]')) {
+        const opt = document.createElement('option');
+        opt.value = 'fub';
+        opt.textContent = 'Follow Up Boss deal';
+        mvSourceField.insertBefore(opt, mvSourceField.firstChild);
+      }
+      fubSourcedMV = data.marketValue;
+      mvSourceField.value = 'fub';
+      mvInput.value = String(Math.round(fubSourcedMV));
+      mvFubStatus.textContent = '● Connected to Follow Up Boss — Market Value from deal'
+        + (data.dealId ? ' #' + data.dealId : '') + who;
+      updateSourceUI();
+      updateMoney();
+      refreshSourced();
+    } else {
+      mvFubStatus.textContent = '● Connected to Follow Up Boss — no deal value found'
+        + who + '; using LandInsight default';
+    }
+  } catch (e) {
+    mvFubStatus.hidden = false;
+    mvFubStatus.className = 'mv-fub-status err';
+    mvFubStatus.textContent = '● Follow Up Boss connection failed: ' + e.message + ' — using LandInsight default';
+  }
+}
+
 /* ---------- Initial Render ---------- */
 updateSubdivideBanner();
 renderProximity();
+updateSourceUI();
 mvInput.value = String(Math.round(computeSourcedMV()));  // seed MV from LandInsight on load
 updateAll();
 refreshSourced();
+initFubEmbed();   // when embedded in FUB, override MV with the deal value
 </script>
 
 </body>

@@ -1,12 +1,85 @@
 # DewClaw Pricing Tool
 
-Standalone static pricing dashboard for DewClaw land deal review.
+Pricing dashboard for DewClaw land deal review, with an optional **Follow Up Boss**
+embedded-app integration that auto-fills Market Value from the contact's Deal.
 
-## Deploy On Render
+The dashboard is a single self-contained page (`pricing-dashboard/index.html`).
+A small Node/Express server (`server.js`) serves it and provides the secure
+backend for the Follow Up Boss integration.
 
-Use either option:
+## Run locally
 
-- **Docker Web Service:** Render will use the root `Dockerfile` and serve the dashboard with nginx.
-- **Static Site:** set the publish directory to `pricing-dashboard`.
+```
+npm install
+npm start
+# http://localhost:8080
+```
 
-The app entry point is `pricing-dashboard/index.html`.
+The dashboard works standalone with no configuration — Market Value is sourced
+from the LandInsight figures. The Follow Up Boss features activate only when the
+page is loaded inside FUB with a signed `?context=&signature=`.
+
+## Deploy on Render (Docker Web Service)
+
+Render builds the root `Dockerfile` (Node 20) and runs `node server.js`. Set the
+environment variables below under **Environment**; Render injects `PORT`.
+
+> The old "Static Site" option still serves the standalone dashboard, but the
+> Follow Up Boss integration needs the server — use the Docker Web Service.
+
+## Follow Up Boss integration
+
+When embedded in FUB, the app reads the open contact's Deal and auto-fills Market
+Value (MV). Sourcing precedence: **FUB deal value → LandInsight fallback**. The
+subdivide trend line is acreage-based and is never affected by MV.
+
+### How it works
+
+```
+FUB person page ──(?context&signature)──► server.js
+   1. verify HMAC-SHA256(context, FUB_EMBED_SECRET) === signature
+   2. decode context → person.id
+   3. GET /v1/deals?personId=…   (Basic auth w/ FUB_API_KEY)
+   4. read the configured market-value field off the deal
+   5. return JSON → dashboard auto-fills MV
+```
+
+The signed context only contains the person/account; deal data is fetched
+server-side with the API key. Secrets live only in env vars, never in the page.
+
+### Setup
+
+1. **Register an embedded app** in Follow Up Boss. Set its URL to your deployed
+   app (e.g. `https://<your-app>.onrender.com/`). Copy the **secret key** →
+   `FUB_EMBED_SECRET`.
+2. **Generate an API key**: FUB → Admin → API → create key → `FUB_API_KEY`.
+3. **Find the deal value field**: open
+   `https://<your-app>.onrender.com/api/fub/dealfields` to list field names, then
+   set `FUB_DEAL_VALUE_FIELD` (default `price`; a custom "Market Value" field
+   would be `customMarketValue`).
+4. Set those env vars on Render and deploy.
+5. Open a contact in FUB → the embedded app shows the dashboard with MV
+   pre-filled from the deal. A green status line confirms the connection.
+
+### Environment variables
+
+| Var | Required | Default | Purpose |
+|---|---|---|---|
+| `FUB_API_KEY` | yes | — | Server-to-server calls to the FUB API (Basic auth) |
+| `FUB_EMBED_SECRET` | yes | — | Verify the signed embedded-app context |
+| `FUB_DEAL_VALUE_FIELD` | no | `price` | Deal field holding market value |
+| `PORT` | no | `8080` | Set automatically by Render |
+
+See `.env.example`. Health/config check: `GET /api/health`.
+
+## Project layout
+
+```
+server.js                  Node/Express server + FUB endpoints
+Dockerfile                 Node 20 image for Render
+package.json
+.env.example
+pricing-dashboard/
+  index.html               the dashboard (static, self-contained)
+  reference/               spec, rubric, subdivide formulas
+```
