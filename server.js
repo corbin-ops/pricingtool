@@ -133,15 +133,25 @@ app.get('/api/fub/dealfields', async (req, res) => {
 });
 
 // ---------- Dev helper: list Person custom fields ----------
+// FUB doesn't expose a dedicated peopleCustomFields collection. Instead, fetch the
+// newest Person and dump every key whose name starts with "custom" — that's how
+// custom fields surface on a Person record.
 app.get('/api/fub/personfields', async (req, res) => {
   if (!FUB_API_KEY) return res.status(500).json({ ok: false, error: 'Server is missing FUB_API_KEY' });
   try {
-    const data   = await fubGet('/peopleCustomFields');
-    const list   = data.peoplecustomfields || data.peopleCustomFields
-                 || (data._embedded && (data._embedded.peopleCustomFields || data._embedded.peoplecustomfields))
-                 || [];
-    const fields = list.map(f => ({ name: f.name, label: f.label, type: f.type }));
-    res.json({ ok: true, customFields: fields });
+    const data    = await fubGet('/people', { limit: 1, sort: 'created', includeTrash: false });
+    const people  = data.people || (data._embedded && data._embedded.people) || [];
+    const person  = people[0] || {};
+    const allKeys = Object.keys(person).sort();
+    const customs = {};
+    for (const k of allKeys) if (k.toLowerCase().startsWith('custom')) customs[k] = person[k];
+    res.json({
+      ok: true,
+      samplePersonId: person.id || null,
+      allKeysCount: allKeys.length,
+      customKeys: Object.keys(customs),
+      sampleCustomValues: customs
+    });
   } catch (e) {
     res.status(502).json({ ok: false, error: String(e.message || e) });
   }
