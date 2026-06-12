@@ -132,6 +132,21 @@ app.get('/api/fub/dealfields', async (req, res) => {
   }
 });
 
+// ---------- Dev helper: list Person custom fields ----------
+app.get('/api/fub/personfields', async (req, res) => {
+  if (!FUB_API_KEY) return res.status(500).json({ ok: false, error: 'Server is missing FUB_API_KEY' });
+  try {
+    const data   = await fubGet('/peopleCustomFields');
+    const list   = data.peoplecustomfields || data.peopleCustomFields
+                 || (data._embedded && (data._embedded.peopleCustomFields || data._embedded.peoplecustomfields))
+                 || [];
+    const fields = list.map(f => ({ name: f.name, label: f.label, type: f.type }));
+    res.json({ ok: true, customFields: fields });
+  } catch (e) {
+    res.status(502).json({ ok: false, error: String(e.message || e) });
+  }
+});
+
 // ---------- Health / config check ----------
 app.get('/api/health', (_req, res) => res.json({
   ok: true,
