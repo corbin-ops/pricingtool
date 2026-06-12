@@ -133,29 +133,39 @@ app.get('/api/fub/dealfields', async (req, res) => {
 });
 
 // ---------- Dev helper: list Person custom fields ----------
-// FUB doesn't expose a dedicated peopleCustomFields collection. Instead, fetch the
-// newest Person and dump every key whose name starts with "custom" — that's how
-// custom fields surface on a Person record.
+// FUB has no /peopleCustomFields collection; custom fields live on the Person
+// resource itself but only when fields=allFields is requested. We also surface
+// the full top-level key list so we can spot any nested customFields container.
 app.get('/api/fub/personfields', async (req, res) => {
   if (!FUB_API_KEY) return res.status(500).json({ ok: false, error: 'Server is missing FUB_API_KEY' });
   try {
-    const data    = await fubGet('/people', { limit: 1, sort: 'created', includeTrash: false });
-    const people  = data.people || (data._embedded && data._embedded.people) || [];
-    const person  = people[0] || {};
-    const allKeys = Object.keys(person).sort();
-    const customs = {};
-    for (const k of allKeys) if (k.toLowerCase().startsWith('custom')) customs[k] = person[k];
-    res.json({
-      ok: true,
-      samplePersonId: person.id || null,
-      allKeysCount: allKeys.length,
-      customKeys: Object.keys(customs),
-      sampleCustomValues: customs
-    });
+    const params = { limit: 1, sort: 'created', fields: 'allFields' };
+    if (req.query.personId) {
+      const id   = String(req.query.personId);
+      const data = await fubGet('/people/' + encodeURIComponent(id), { fields: 'allFields' });
+      return res.json(summarizePerson(data));
+    }
+    const data   = await fubGet('/people', params);
+    const people = data.people || (data._embedded && data._embedded.people) || [];
+    res.json(summarizePerson(people[0] || {}));
   } catch (e) {
     res.status(502).json({ ok: false, error: String(e.message || e) });
   }
 });
+
+function summarizePerson(person) {
+  const allKeys = Object.keys(person).sort();
+  const customs = {};
+  for (const k of allKeys) if (k.toLowerCase().startsWith('custom')) customs[k] = person[k];
+  return {
+    ok: true,
+    samplePersonId: person.id || null,
+    allKeysCount: allKeys.length,
+    allKeys,
+    customKeys: Object.keys(customs),
+    sampleCustomValues: customs
+  };
+}
 
 // ---------- Health / config check ----------
 app.get('/api/health', (_req, res) => res.json({
