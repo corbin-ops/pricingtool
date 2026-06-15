@@ -73,6 +73,7 @@ Single self-contained HTML file: Chart.js via CDN, vanilla JS, no framework, all
 | 8 | "Push this to GitHub." | gh CLI not installed → installed it. Repo `corbin-ops/pricingtool` already existed with a **different** dashboard + Render/Docker setup. Per operator's choice, **replaced** `pricing-dashboard/index.html` on `main` with this build (commit `8b6bd40`). Old dashboard preserved in history at `b5ef68e`. |
 | 9 | "Connect this to Follow Up Boss — auto-fill market value from the Pricing tab." | Chosen approach: value lives on a **Deal record**, app **embedded inside FUB**, FUB deal value is the **primary** MV source. Built a Node/Express backend + embed integration on branch `fub-embed-integration` (commit `63755c4`). |
 | 10 | "Export & push everything to GitHub in a single md file." | This file (`SESSION_HANDOFF.md`). |
+| 11 | "Create a pricing tool logo for the FUB integration." | Designed 3 concepts; chose **A · Price pulse** (power curve + coral dot). Added `pricing-dashboard/assets/` (SVG source + PNG icons 32/64/192/512), wired favicon + inline header logo. |
 
 ---
 

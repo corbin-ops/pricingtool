@@ -81,5 +81,18 @@ package.json
 .env.example
 pricing-dashboard/
   index.html               the dashboard (static, self-contained)
+  assets/                  logo (SVG source + PNG app icons)
   reference/               spec, rubric, subdivide formulas
 ```
+
+## Branding
+
+Logo: "Price pulse" — the subdivide power curve with the coral subject dot, in the
+dashboard's purple (`#534AB7`) / coral (`#D85A30`) palette.
+
+- `assets/logo-icon.svg` — square app icon (use for the **FUB embedded-app icon**)
+- `assets/logo-mark.svg` — transparent mark for light backgrounds
+- `assets/logo-lockup.svg` — icon + wordmark for headers
+- `assets/icon-{32,64,192,512}.png` — raster app icons for FUB upload
+
+The dashboard uses `logo-icon.svg` as its favicon and an inline copy in the header.
