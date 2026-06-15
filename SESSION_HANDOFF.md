@@ -76,6 +76,7 @@ Single self-contained HTML file: Chart.js via CDN, vanilla JS, no framework, all
 | 11 | "Create a pricing tool logo for the FUB integration." | Designed 3 concepts; chose **A · Price pulse** (power curve + coral dot). Added `pricing-dashboard/assets/` (SVG source + PNG icons 32/64/192/512), wired favicon + inline header logo. |
 | 12 | "Where does the dashboard get its data — all from FUB?" | Confirmed: **all from the Person record**. Added `/api/fub/parcel` (fetch person `fields=allFields`, env-configurable field keys) → auto-fills MV (Person `price`), AV, MLV, APN, location, LI link. MV source decided = Person `price`. |
 | 13 | Mapped fields to real FUB names; dropped owner proximity. | `Assessed Value` ← FUB **Assessed Land Value** (`customAssessedLandValue`); property location ← FUB **Mail State/County** (`customMailState`/`customMailCounty`). Removed the **Owner Proximity** card + comparison and the owner-address fetch (no separate owner-location data). Relabeled the dashboard row to "Assessed Land Value". |
+| 14 | LI Link field is actually named **"Parcel Link"** in FUB. | `FUB_FIELD_LI_LINK` value/default → `customParcelLink` (URL form `https://app.landinsights.co/data?parcel=<id>`). Env-var key name unchanged. |
 
 ---
 
@@ -202,7 +203,7 @@ FUB person page ──(?context&signature)──► server.js (Render)
    1. verify HMAC-SHA256(context, FUB_EMBED_SECRET) === signature
    2. decode context (base64 JSON) → person.id
    3. GET https://api.followupboss.com/v1/people/{id}?fields=allFields   (Basic auth, FUB_API_KEY)
-   4. read Price + parcel custom fields (Assessed Land Value, Market Land Value, APN, Mail State/County, LI link)
+   4. read Price + parcel custom fields (Assessed Land Value, Market Land Value, APN, Mail State/County, Parcel Link)
    5. return JSON → dashboard auto-fills MV (Price), AV, MLV, APN, location, LI link
 ```
 

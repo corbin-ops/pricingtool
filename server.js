@@ -38,7 +38,7 @@ const F = {
   apn:             process.env.FUB_FIELD_APN          || 'customAPN',
   mailState:       process.env.FUB_FIELD_MAIL_STATE   || 'customMailState',
   mailCounty:      process.env.FUB_FIELD_MAIL_COUNTY  || 'customMailCounty',
-  liLink:          process.env.FUB_FIELD_LI_LINK      || 'customLILink'
+  liLink:          process.env.FUB_FIELD_LI_LINK      || 'customParcelLink' // FUB "Parcel Link"
 };
 
 const DASHBOARD_DIR = path.join(__dirname, 'pricing-dashboard');

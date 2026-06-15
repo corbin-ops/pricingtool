@@ -40,7 +40,7 @@ FUB person page ──(?context&signature)──► server.js
    1. verify HMAC-SHA256(context, FUB_EMBED_SECRET) === signature
    2. decode context → person.id
    3. GET /v1/people/{id}?fields=allFields   (Basic auth w/ FUB_API_KEY)
-   4. read Price + parcel custom fields (Assessed Land Value, Market Land Value, APN, Mail State/County, LI link)
+   4. read Price + parcel custom fields (Assessed Land Value, Market Land Value, APN, Mail State/County, Parcel Link)
    5. return JSON → dashboard auto-fills MV, AV, MLV, APN, location, LI link
 ```
 
@@ -55,7 +55,7 @@ vars, never in the page.
    `FUB_EMBED_SECRET`.
 2. **Generate an API key**: FUB → Admin → API → create key → `FUB_API_KEY`.
 3. **Create Person custom fields** (Admin → Custom Fields): Assessed Land Value,
-   Market Land Value, APN, Mail State, Mail County, LI Link. Discover their keys via
+   Market Land Value, APN, Mail State, Mail County, Parcel Link. Discover their keys via
    `https://<your-app>.onrender.com/api/fub/personfields?personId=<id>` and set the
    `FUB_FIELD_*` env vars to match. Market Value uses the built-in `price`.
 4. Set those env vars on Render and deploy.
@@ -74,7 +74,7 @@ vars, never in the page.
 | `FUB_FIELD_MARKET_LAND` | no | `customMarketLandValue` | "Market Land Value" |
 | `FUB_FIELD_APN` | no | `customAPN` | "APN" |
 | `FUB_FIELD_MAIL_STATE` / `_MAIL_COUNTY` | no | `customMail…` | "Mail State" / "Mail County" → header location |
-| `FUB_FIELD_LI_LINK` | no | `customLILink` | LandInsight URL |
+| `FUB_FIELD_LI_LINK` | no | `customParcelLink` | FUB "Parcel Link" → LandInsight URL |
 | `PORT` | no | `8080` | Set automatically by Render |
 
 See `.env.example`. Health/config check: `GET /api/health`.
