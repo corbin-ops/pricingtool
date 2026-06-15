@@ -526,23 +526,7 @@ body {
       </div>
     </div>
 
-    <!-- 2. Owner Proximity -->
-    <div class="card">
-      <div class="card-head">
-        <div class="card-title">Owner Proximity</div>
-        <div class="card-sub" id="prox-mail">Mail: Los Angeles, CA</div>
-      </div>
-      <div class="row">
-        <div class="row-label">State match</div>
-        <div class="row-val"><span class="chip chip-danger" id="prox-state">Out of state</span></div>
-      </div>
-      <div class="row">
-        <div class="row-label">County match</div>
-        <div class="row-val"><span class="chip chip-warning" id="prox-county">Out of county</span></div>
-      </div>
-    </div>
-
-    <!-- 3. Valuation Score (DUAL) -->
+    <!-- 2. Valuation Score (DUAL) -->
     <div class="card">
       <div class="card-head">
         <div class="card-title">Valuation Score</div>
@@ -551,7 +535,7 @@ body {
 
       <div class="score-row">
         <div class="left">
-          <label>Assessed Value</label>
+          <label>Assessed Land Value</label>
           <div class="score-input-wrap">
             <span class="muted">$</span>
             <input type="number" class="score-input" id="av-in" value="42000">
@@ -1094,27 +1078,6 @@ function ensureFubOption() {
   }
 }
 
-// Owner proximity chips: compare the owner's mailing location vs the property location.
-function updateProximity(owner, prop) {
-  owner = owner || {}; prop = prop || {};
-  const mail = document.getElementById('prox-mail');
-  if (mail && (owner.city || owner.state)) {
-    mail.textContent = 'Mail: ' + [owner.city, owner.state].filter(Boolean).join(', ');
-  }
-  const sEl = document.getElementById('prox-state');
-  if (sEl && owner.state && prop.state) {
-    const match = owner.state.trim().toUpperCase() === prop.state.trim().toUpperCase();
-    sEl.className = 'chip ' + (match ? 'chip-success' : 'chip-danger');
-    sEl.textContent = match ? ('In-state (' + prop.state + ')') : 'Out of state';
-  }
-  const cEl = document.getElementById('prox-county');
-  if (cEl && owner.county && prop.county) {
-    const match = owner.county.trim().toLowerCase() === prop.county.trim().toLowerCase();
-    cEl.className = 'chip ' + (match ? 'chip-success' : 'chip-warning');
-    cEl.textContent = match ? 'In-county' : 'Out of county';
-  }
-}
-
 async function initFubEmbed() {
   const params = new URLSearchParams(window.location.search);
   if (!params.get('context') || !params.get('signature')) return;  // not embedded — keep LandInsight
@@ -1140,10 +1103,10 @@ async function initFubEmbed() {
     if (d.assessedValue   != null) document.getElementById('av-in').value  = d.assessedValue;
     if (d.marketLandValue != null) document.getElementById('mlv-in').value = d.marketLandValue;
 
-    // APN + property location → header
+    // APN + mail location → header
     const apnEl = document.getElementById('parcel-id');
-    if (apnEl && (d.apn || d.propertyState || d.propertyCounty)) {
-      const loc = [d.propertyCounty ? d.propertyCounty + ' County' : null, d.propertyState].filter(Boolean).join(', ');
+    if (apnEl && (d.apn || d.mailState || d.mailCounty)) {
+      const loc = [d.mailCounty ? d.mailCounty + ' County' : null, d.mailState].filter(Boolean).join(', ');
       apnEl.textContent = (d.apn ? 'APN ' + d.apn : 'APN —') + (loc ? ' · ' + loc : '');
     }
     // LandInsight link
@@ -1151,8 +1114,6 @@ async function initFubEmbed() {
       const li = document.getElementById('li-link');
       if (li) { li.href = d.liLink; li.hidden = false; }
     }
-    // Owner proximity (owner address vs property location)
-    updateProximity(d.owner, { state: d.propertyState, county: d.propertyCounty });
 
     // Recompute money + scores from the pulled values
     updateMoney();

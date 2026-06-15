@@ -74,7 +74,8 @@ Single self-contained HTML file: Chart.js via CDN, vanilla JS, no framework, all
 | 9 | "Connect this to Follow Up Boss — auto-fill market value from the Pricing tab." | Chosen approach: value lives on a **Deal record**, app **embedded inside FUB**, FUB deal value is the **primary** MV source. Built a Node/Express backend + embed integration on branch `fub-embed-integration` (commit `63755c4`). |
 | 10 | "Export & push everything to GitHub in a single md file." | This file (`SESSION_HANDOFF.md`). |
 | 11 | "Create a pricing tool logo for the FUB integration." | Designed 3 concepts; chose **A · Price pulse** (power curve + coral dot). Added `pricing-dashboard/assets/` (SVG source + PNG icons 32/64/192/512), wired favicon + inline header logo. |
-| 12 | "Where does the dashboard get its data — all from FUB?" | Confirmed: **all from the Person record**. Added `/api/fub/parcel` (fetch person `fields=allFields`, env-configurable field keys) → auto-fills MV (Person `price`), AV, MLV, APN, property State/County, LI link, and the proximity chips (owner address vs property). MV source decided = Person `price`. |
+| 12 | "Where does the dashboard get its data — all from FUB?" | Confirmed: **all from the Person record**. Added `/api/fub/parcel` (fetch person `fields=allFields`, env-configurable field keys) → auto-fills MV (Person `price`), AV, MLV, APN, location, LI link. MV source decided = Person `price`. |
+| 13 | Mapped fields to real FUB names; dropped owner proximity. | `Assessed Value` ← FUB **Assessed Land Value** (`customAssessedLandValue`); property location ← FUB **Mail State/County** (`customMailState`/`customMailCounty`). Removed the **Owner Proximity** card + comparison and the owner-address fetch (no separate owner-location data). Relabeled the dashboard row to "Assessed Land Value". |
 
 ---
 
@@ -107,7 +108,6 @@ fub-embed-integration  (branched from 8b6bd40)
 
 ### Left column
 - **Seller Signals** — tax delinquent (chip), back taxes, annual tax, family transfer, ownership length.
-- **Owner Proximity** — state / county match chips (green/yellow/red).
 - **Valuation Score (dual)** — editable Assessed Value + Market Land Value inputs; each gets a 0–10 score **ring**, % of MV, and verdict text. Scored via piecewise curve ([§6](#6-all-formulas)).
 - **Acreage Intel** — editable deeded + LandInsight-calc acreage; variance %; **survey flag** (Normal / Watch △ / Hard ⚑).
 - **Lot Type** — dropdown of 11 types in 4 groups; shows description + colored tag chips.
@@ -202,7 +202,7 @@ FUB person page ──(?context&signature)──► server.js (Render)
    1. verify HMAC-SHA256(context, FUB_EMBED_SECRET) === signature
    2. decode context (base64 JSON) → person.id
    3. GET https://api.followupboss.com/v1/people/{id}?fields=allFields   (Basic auth, FUB_API_KEY)
-   4. read Price + parcel custom fields + owner mailing address
+   4. read Price + parcel custom fields (Assessed Land Value, Market Land Value, APN, Mail State/County, LI link)
    5. return JSON → dashboard auto-fills MV (Price), AV, MLV, APN, location, LI link
 ```
 
@@ -232,7 +232,7 @@ README.md          CHANGED: setup + deploy docs
 | `FUB_API_KEY` | yes | — | Server-to-server FUB API calls (Basic auth) |
 | `FUB_EMBED_SECRET` | yes | — | Verify the signed embedded-app context |
 | `FUB_FIELD_MARKET_VALUE` | no | `price` | Person field for Market Value |
-| `FUB_FIELD_ASSESSED` / `_MARKET_LAND` / `_APN` / `_PROP_STATE` / `_PROP_COUNTY` / `_LI_LINK` | no | `custom…` | Person custom-field keys (override to match FUB) |
+| `FUB_FIELD_ASSESSED` / `_MARKET_LAND` / `_APN` / `_MAIL_STATE` / `_MAIL_COUNTY` / `_LI_LINK` | no | `custom…` | Person custom-field keys (override to match FUB) |
 | `PORT` | no | `8080` | Set automatically by Render |
 
 ### Local smoke test (already passed on original device)

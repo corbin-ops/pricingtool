@@ -40,7 +40,7 @@ FUB person page ──(?context&signature)──► server.js
    1. verify HMAC-SHA256(context, FUB_EMBED_SECRET) === signature
    2. decode context → person.id
    3. GET /v1/people/{id}?fields=allFields   (Basic auth w/ FUB_API_KEY)
-   4. read Price + parcel custom fields + the owner's mailing address
+   4. read Price + parcel custom fields (Assessed Land Value, Market Land Value, APN, Mail State/County, LI link)
    5. return JSON → dashboard auto-fills MV, AV, MLV, APN, location, LI link
 ```
 
@@ -54,8 +54,8 @@ vars, never in the page.
    app (e.g. `https://<your-app>.onrender.com/`). Copy the **secret key** →
    `FUB_EMBED_SECRET`.
 2. **Generate an API key**: FUB → Admin → API → create key → `FUB_API_KEY`.
-3. **Create Person custom fields** (Admin → Custom Fields): Assessed Value, Market
-   Land Value, APN, Property State, Property County, LI Link. Discover their keys via
+3. **Create Person custom fields** (Admin → Custom Fields): Assessed Land Value,
+   Market Land Value, APN, Mail State, Mail County, LI Link. Discover their keys via
    `https://<your-app>.onrender.com/api/fub/personfields?personId=<id>` and set the
    `FUB_FIELD_*` env vars to match. Market Value uses the built-in `price`.
 4. Set those env vars on Render and deploy.
@@ -70,10 +70,10 @@ vars, never in the page.
 | `FUB_API_KEY` | yes | — | Server-to-server calls to the FUB API (Basic auth) |
 | `FUB_EMBED_SECRET` | yes | — | Verify the signed embedded-app context |
 | `FUB_FIELD_MARKET_VALUE` | no | `price` | Person field for Market Value |
-| `FUB_FIELD_ASSESSED` | no | `customAssessedValue` | Person custom field |
-| `FUB_FIELD_MARKET_LAND` | no | `customMarketLandValue` | Person custom field |
-| `FUB_FIELD_APN` | no | `customAPN` | Person custom field |
-| `FUB_FIELD_PROP_STATE` / `_PROP_COUNTY` | no | `customProperty…` | Property location |
+| `FUB_FIELD_ASSESSED` | no | `customAssessedLandValue` | "Assessed Land Value" |
+| `FUB_FIELD_MARKET_LAND` | no | `customMarketLandValue` | "Market Land Value" |
+| `FUB_FIELD_APN` | no | `customAPN` | "APN" |
+| `FUB_FIELD_MAIL_STATE` / `_MAIL_COUNTY` | no | `customMail…` | "Mail State" / "Mail County" → header location |
 | `FUB_FIELD_LI_LINK` | no | `customLILink` | LandInsight URL |
 | `PORT` | no | `8080` | Set automatically by Render |
 
