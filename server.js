@@ -29,6 +29,19 @@ const FUB_EMBED_SECRET     = process.env.FUB_EMBED_SECRET || '';
 const FUB_DEAL_VALUE_FIELD = process.env.FUB_DEAL_VALUE_FIELD || 'price'; // e.g. "price" or "customMarketValue"
 const FUB_API_BASE         = 'https://api.followupboss.com/v1';
 
+// Person field keys — override in env to match your FUB custom-field names.
+// Discover the real keys with:  GET /api/fub/personfields?personId=…
+const F = {
+  marketValue:     process.env.FUB_FIELD_MARKET_VALUE || 'price',                 // built-in Person "Price"
+  assessedValue:   process.env.FUB_FIELD_ASSESSED     || 'customAssessedValue',
+  marketLandValue: process.env.FUB_FIELD_MARKET_LAND  || 'customMarketLandValue',
+  apn:             process.env.FUB_FIELD_APN          || 'customAPN',
+  propertyState:   process.env.FUB_FIELD_PROP_STATE   || 'customPropertyState',
+  propertyCounty:  process.env.FUB_FIELD_PROP_COUNTY  || 'customPropertyCounty',
+  liLink:          process.env.FUB_FIELD_LI_LINK      || 'customLILink',
+  ownerCounty:     process.env.FUB_FIELD_OWNER_COUNTY || 'customOwnerCounty'
+};
+
 const DASHBOARD_DIR = path.join(__dirname, 'pricing-dashboard');
 
 // ---------- helpers ----------
@@ -76,6 +89,11 @@ function pickDealValue(deals, field) {
   return null;
 }
 
+function pickPrimaryAddress(addresses) {
+  if (!Array.isArray(addresses) || !addresses.length) return null;
+  return addresses.find(a => a && a.isPrimary) || addresses[0];
+}
+
 // ---------- API: embed deal lookup ----------
 app.get('/api/fub/deal', async (req, res) => {
   const { context, signature } = req.query;
@@ -112,6 +130,50 @@ app.get('/api/fub/deal', async (req, res) => {
       dealName:    hit.deal.name || null,
       personName,
       field:       FUB_DEAL_VALUE_FIELD
+    });
+  } catch (e) {
+    return res.status(502).json({ ok: false, error: String(e.message || e) });
+  }
+});
+
+// ---------- API: full parcel pull from the Person record ----------
+// MV ← Person "Price"; AV/MLV/APN/property location/LI link ← Person custom fields;
+// owner location ← Person primary address (for the proximity chips).
+app.get('/api/fub/parcel', async (req, res) => {
+  const { context, signature } = req.query;
+  if (!verifySignature(context, signature)) {
+    return res.status(401).json({ ok: false, error: 'Invalid or missing signature' });
+  }
+  if (!FUB_API_KEY) {
+    return res.status(500).json({ ok: false, error: 'Server is missing FUB_API_KEY' });
+  }
+  let ctx;
+  try { ctx = decodeContext(context); }
+  catch { return res.status(400).json({ ok: false, error: 'Could not decode context' }); }
+
+  const personId = ctx && ctx.person && ctx.person.id;
+  if (!personId) return res.json({ ok: true, person: null, reason: 'No person in context' });
+
+  try {
+    const p    = await fubGet('/people/' + encodeURIComponent(personId), { fields: 'allFields' });
+    const addr = pickPrimaryAddress(p.addresses);
+    const num  = (v) => { const n = parseFloat(v); return (v != null && v !== '' && !Number.isNaN(n)) ? n : null; };
+    return res.json({
+      ok:              true,
+      personName:      [p.firstName, p.lastName].filter(Boolean).join(' '),
+      marketValue:     num(p[F.marketValue]),
+      assessedValue:   num(p[F.assessedValue]),
+      marketLandValue: num(p[F.marketLandValue]),
+      apn:             p[F.apn] || null,
+      propertyState:   p[F.propertyState] || null,
+      propertyCounty:  p[F.propertyCounty] || null,
+      liLink:          p[F.liLink] || null,
+      owner: {
+        city:   addr ? (addr.city || null) : null,
+        state:  addr ? (addr.state || null) : null,
+        county: p[F.ownerCounty] || null
+      },
+      fieldsUsed:      F
     });
   } catch (e) {
     return res.status(502).json({ ok: false, error: String(e.message || e) });
