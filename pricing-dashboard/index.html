@@ -96,6 +96,30 @@ body {
 .li-link:hover { background: var(--color-accent-soft); }
 .li-link[hidden] { display: none; }
 
+.signal-input,
+.signal-select {
+  width: 150px;
+  max-width: 100%;
+  background: var(--color-background-secondary);
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md);
+  padding: 5px 8px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--color-text-primary);
+}
+.signal-select { cursor: pointer; }
+.money-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-text-secondary);
+}
+.money-field .signal-input {
+  width: 118px;
+  font-weight: 600;
+}
+
 /* ---------- Grid Layout ---------- */
 .dashboard {
   display: grid;
@@ -489,7 +513,7 @@ body {
   </div>
   <div class="topbar-right">
     <div class="parcel-id" id="parcel-id">APN 074-218-031 · Bandera County, TX</div>
-    <a id="li-link" class="li-link" href="#" target="_blank" rel="noopener" hidden>LandInsight ↗</a>
+    <a id="li-link" class="li-link" href="#" target="_blank" rel="noopener" hidden>Land Insights ↗</a>
   </div>
 </div>
 
@@ -502,7 +526,7 @@ body {
     <div class="card">
       <div class="card-head">
         <div class="card-title">Seller Signals</div>
-        <div class="card-sub">5 signals</div>
+        <div class="card-sub">7 signals</div>
       </div>
       <div class="row">
         <div class="row-label">Tax delinquent</div>
@@ -511,6 +535,25 @@ body {
       <div class="row">
         <div class="row-label">Back taxes</div>
         <div class="row-val">$3,420</div>
+      </div>
+      <div class="row">
+        <div class="row-label">Seller asking price</div>
+        <div class="row-val">
+          <span class="money-field">$<input type="number" class="signal-input" id="seller-asking-in" value="" placeholder="—" step="1000"></span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-label">Seller motivation</div>
+        <div class="row-val">
+          <select class="signal-select" id="seller-motivation-select">
+            <option value="">—</option>
+            <option value="Extremely motivated">Extremely motivated</option>
+            <option value="Motivated">Motivated</option>
+            <option value="Semi-Motivated">Semi-Motivated</option>
+            <option value="Unmotivated">Unmotivated</option>
+            <option value="Mad">Mad</option>
+          </select>
+        </div>
       </div>
       <div class="row">
         <div class="row-label">Annual property tax</div>
@@ -1078,6 +1121,22 @@ function ensureFubOption() {
   }
 }
 
+function setSellerMotivation(value) {
+  if (!value) return;
+  const select = document.getElementById('seller-motivation-select');
+  const normalized = String(value).trim().toLowerCase();
+  const match = Array.from(select.options).find(opt => opt.value.toLowerCase() === normalized);
+  if (match) {
+    select.value = match.value;
+    return;
+  }
+  const opt = document.createElement('option');
+  opt.value = value;
+  opt.textContent = value;
+  select.appendChild(opt);
+  select.value = value;
+}
+
 async function initFubEmbed() {
   const params = new URLSearchParams(window.location.search);
   if (!params.get('context') || !params.get('signature')) return;  // not embedded — keep LandInsight
@@ -1102,6 +1161,8 @@ async function initFubEmbed() {
     // Assessed Value / Market Land Value → valuation score inputs
     if (d.assessedValue   != null) document.getElementById('av-in').value  = d.assessedValue;
     if (d.marketLandValue != null) document.getElementById('mlv-in').value = d.marketLandValue;
+    if (d.sellerAskingPrice != null) document.getElementById('seller-asking-in').value = Math.round(d.sellerAskingPrice);
+    if (d.sellerMotivation) setSellerMotivation(d.sellerMotivation);
 
     // APN + mail location → header
     const apnEl = document.getElementById('parcel-id');
@@ -1124,6 +1185,9 @@ async function initFubEmbed() {
     if (d.assessedValue != null)   got.push('AV');
     if (d.marketLandValue != null) got.push('MLV');
     if (d.apn)                     got.push('APN');
+    if (d.liLink)                  got.push('Land Insights link');
+    if (d.sellerAskingPrice != null) got.push('Seller asking');
+    if (d.sellerMotivation)        got.push('Motivation');
     mvFubStatus.textContent = '● Connected to Follow Up Boss' + who +
       (got.length ? ' — pulled ' + got.join(' · ') : ' — no parcel fields populated yet; using LandInsight default');
   } catch (e) {

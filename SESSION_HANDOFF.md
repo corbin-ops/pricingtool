@@ -77,6 +77,7 @@ Single self-contained HTML file: Chart.js via CDN, vanilla JS, no framework, all
 | 12 | "Where does the dashboard get its data — all from FUB?" | Confirmed: **all from the Person record**. Added `/api/fub/parcel` (fetch person `fields=allFields`, env-configurable field keys) → auto-fills MV (Person `price`), AV, MLV, APN, location, LI link. MV source decided = Person `price`. |
 | 13 | Mapped fields to real FUB names; dropped owner proximity. | `Assessed Value` ← FUB **Assessed Land Value** (`customAssessedLandValue`); property location ← FUB **Mail State/County** (`customMailState`/`customMailCounty`). Removed the **Owner Proximity** card + comparison and the owner-address fetch (no separate owner-location data). Relabeled the dashboard row to "Assessed Land Value". |
 | 14 | LI Link field is actually named **"Parcel Link"** in FUB. | `FUB_FIELD_LI_LINK` value/default → `customParcelLink` (URL form `https://app.landinsights.co/data?parcel=<id>`). Env-var key name unchanged. |
+| 15 | Pricing tool / CRM custom fields. | Added Smarter Contact/FUB alias mapping, normalized Parcel Link into a proper **Land Insights** URL, added **Seller Asking Price** + **Seller Motivation** (`Extremely motivated`, `Motivated`, `Semi-Motivated`, `Unmotivated`, `Mad`), and intentionally left ACE/survey CRM fields out of the pricing payload. |
 
 ---
 

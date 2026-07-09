@@ -38,7 +38,42 @@ const F = {
   apn:             process.env.FUB_FIELD_APN          || 'customAPN',
   mailState:       process.env.FUB_FIELD_MAIL_STATE   || 'customMailState',
   mailCounty:      process.env.FUB_FIELD_MAIL_COUNTY  || 'customMailCounty',
-  liLink:          process.env.FUB_FIELD_LI_LINK      || 'customParcelLink' // FUB "Parcel Link"
+  liLink:          process.env.FUB_FIELD_LI_LINK      || 'customParcelLink', // FUB "Parcel Link"
+  sellerAsking:    process.env.FUB_FIELD_SELLER_ASKING || 'customSellerAskingPrice',
+  sellerMotivation: process.env.FUB_FIELD_SELLER_MOTIVATION || 'customSellerMotivation'
+};
+
+// Smarter Contact imports can create slightly different FUB custom-field keys.
+// Keep ACE/survey-style CRM fields out of the pricing payload by never aliasing them here.
+const FIELD_ALIASES = {
+  marketValue: ['price', 'value'],
+  assessedValue: ['customAssessedLandValue', 'customAssessedValue'],
+  marketLandValue: ['customMarketLandValue', 'customMarketValue', 'customLandValue'],
+  apn: ['customAPN', 'customApn', 'customParcelNumber', 'customPropertyAPN'],
+  mailState: ['customMailState', 'customMailingState', 'customState'],
+  mailCounty: ['customMailCounty', 'customMailingCounty', 'customCounty'],
+  liLink: [
+    'customParcelLink',
+    'customLILink',
+    'customLiLink',
+    'customLandInsightsLink',
+    'customLandInsightLink',
+    'customLandInsights',
+    'customPropertyLink'
+  ],
+  sellerAsking: [
+    'customSellerAskingPrice',
+    'customSellerAsk',
+    'customAskingPrice',
+    'customAskPrice',
+    'customSellerPrice'
+  ],
+  sellerMotivation: [
+    'customSellerMotivation',
+    'customMotivation',
+    'customMotivationLevel',
+    'customSellerMotivationLevel'
+  ]
 };
 
 const DASHBOARD_DIR = path.join(__dirname, 'pricing-dashboard');
@@ -86,6 +121,68 @@ function pickDealValue(deals, field) {
     if (raw != null && raw !== '' && !Number.isNaN(num)) return { value: num, deal: d };
   }
   return null;
+}
+
+function fieldCandidates(name) {
+  return [F[name], ...(FIELD_ALIASES[name] || [])].filter(Boolean);
+}
+
+function pickPersonField(person, name) {
+  const candidates = fieldCandidates(name);
+  for (const key of candidates) {
+    if (person[key] != null && person[key] !== '') {
+      return { key, value: person[key] };
+    }
+  }
+  return { key: null, value: null };
+}
+
+function toNumber(value) {
+  if (value == null || value === '') return null;
+  const n = parseFloat(String(value).replace(/[$,\s]/g, ''));
+  return Number.isNaN(n) ? null : n;
+}
+
+function normalizeLandInsightsLink(value) {
+  if (value == null) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  const embeddedUrl = raw.match(/https?:\/\/[^\s"'<>]+/i);
+  const candidate = embeddedUrl ? embeddedUrl[0] : raw;
+
+  if (/^https?:\/\//i.test(candidate)) return candidate;
+  if (/^app\.landinsights\.co\//i.test(candidate)) return 'https://' + candidate;
+  if (/^landinsights\.co\//i.test(candidate)) return 'https://app.' + candidate;
+  if (/^\/?data\?parcel=/i.test(candidate)) {
+    return 'https://app.landinsights.co/' + candidate.replace(/^\/+/, '');
+  }
+
+  const parcelId = candidate
+    .replace(/^parcel\s*[:#-]?\s*/i, '')
+    .replace(/^parcel=/i, '')
+    .trim();
+
+  if (/^[A-Za-z0-9._:-]+$/.test(parcelId)) {
+    return 'https://app.landinsights.co/data?parcel=' + encodeURIComponent(parcelId);
+  }
+
+  return raw;
+}
+
+function normalizeSellerMotivation(value) {
+  if (value == null || value === '') return null;
+  const clean = String(value).trim().toLowerCase().replace(/[_\s]+/g, '-');
+  const options = {
+    'extremely-motivated': 'Extremely motivated',
+    'very-motivated': 'Extremely motivated',
+    motivated: 'Motivated',
+    'semi-motivated': 'Semi-Motivated',
+    semimotivated: 'Semi-Motivated',
+    unmotivated: 'Unmotivated',
+    mad: 'Mad'
+  };
+  return options[clean] || String(value).trim();
 }
 
 // ---------- API: embed deal lookup ----------
@@ -149,19 +246,23 @@ app.get('/api/fub/parcel', async (req, res) => {
   if (!personId) return res.json({ ok: true, person: null, reason: 'No person in context' });
 
   try {
-    const p   = await fubGet('/people/' + encodeURIComponent(personId), { fields: 'allFields' });
-    const num = (v) => { const n = parseFloat(v); return (v != null && v !== '' && !Number.isNaN(n)) ? n : null; };
+    const p = await fubGet('/people/' + encodeURIComponent(personId), { fields: 'allFields' });
+    const picked = {};
+    for (const name of Object.keys(F)) picked[name] = pickPersonField(p, name);
+
     return res.json({
       ok:              true,
       personName:      [p.firstName, p.lastName].filter(Boolean).join(' '),
-      marketValue:     num(p[F.marketValue]),
-      assessedValue:   num(p[F.assessedValue]),
-      marketLandValue: num(p[F.marketLandValue]),
-      apn:             p[F.apn] || null,
-      mailState:       p[F.mailState] || null,
-      mailCounty:      p[F.mailCounty] || null,
-      liLink:          p[F.liLink] || null,
-      fieldsUsed:      F
+      marketValue:     toNumber(picked.marketValue.value),
+      assessedValue:   toNumber(picked.assessedValue.value),
+      marketLandValue: toNumber(picked.marketLandValue.value),
+      apn:             picked.apn.value || null,
+      mailState:       picked.mailState.value || null,
+      mailCounty:      picked.mailCounty.value || null,
+      liLink:          normalizeLandInsightsLink(picked.liLink.value),
+      sellerAskingPrice: toNumber(picked.sellerAsking.value),
+      sellerMotivation: normalizeSellerMotivation(picked.sellerMotivation.value),
+      fieldsUsed:      Object.fromEntries(Object.entries(picked).map(([name, hit]) => [name, hit.key || F[name]]))
     });
   } catch (e) {
     return res.status(502).json({ ok: false, error: String(e.message || e) });
