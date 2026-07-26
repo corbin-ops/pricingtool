@@ -96,8 +96,7 @@ body {
 .li-link:hover { background: var(--color-accent-soft); }
 .li-link[hidden] { display: none; }
 
-.signal-input,
-.signal-select {
+.signal-input {
   width: 150px;
   max-width: 100%;
   background: var(--color-background-secondary);
@@ -108,7 +107,6 @@ body {
   font-size: 12px;
   color: var(--color-text-primary);
 }
-.signal-select { cursor: pointer; }
 .money-field {
   display: inline-flex;
   align-items: center;
@@ -480,6 +478,18 @@ body {
 .flag-note.yellow { background: var(--color-background-warning); color: var(--color-text-warning); display: block; }
 .flag-note.red { background: var(--color-background-danger); color: var(--color-text-danger); display: block; }
 
+.stage-chip {
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.stage-hot { background: var(--color-background-danger); color: var(--color-text-danger); }
+.stage-warm { background: var(--color-background-warning); color: var(--color-text-warning); }
+.stage-close { background: var(--color-background-success); color: var(--color-text-success); }
+.stage-far { background: var(--color-background-info); color: var(--color-text-info); }
+.stage-market { background: var(--color-background-tertiary); color: var(--color-text-secondary); }
+.stage-overmarket,
+.stage-dead-lead { background: var(--color-background-danger); color: var(--color-text-danger); }
+
 /* small helpers */
 .muted { color: var(--color-text-tertiary); }
 .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
@@ -526,7 +536,7 @@ body {
     <div class="card">
       <div class="card-head">
         <div class="card-title">Seller Signals</div>
-        <div class="card-sub">7 signals</div>
+        <div class="card-sub">5 signals</div>
       </div>
       <div class="row">
         <div class="row-label">Tax delinquent</div>
@@ -535,25 +545,6 @@ body {
       <div class="row">
         <div class="row-label">Back taxes</div>
         <div class="row-val">$3,420</div>
-      </div>
-      <div class="row">
-        <div class="row-label">Seller asking price</div>
-        <div class="row-val">
-          <span class="money-field">$<input type="number" class="signal-input" id="seller-asking-in" value="" placeholder="—" step="1000"></span>
-        </div>
-      </div>
-      <div class="row">
-        <div class="row-label">Seller motivation</div>
-        <div class="row-val">
-          <select class="signal-select" id="seller-motivation-select">
-            <option value="">—</option>
-            <option value="Extremely motivated">Extremely motivated</option>
-            <option value="Motivated">Motivated</option>
-            <option value="Semi-Motivated">Semi-Motivated</option>
-            <option value="Unmotivated">Unmotivated</option>
-            <option value="Mad">Mad</option>
-          </select>
-        </div>
       </div>
       <div class="row">
         <div class="row-label">Annual property tax</div>
@@ -603,25 +594,27 @@ body {
       </div>
     </div>
 
-    <!-- 4. Acreage Intel -->
+    <!-- 4. Market Value vs Seller Asking Price -->
     <div class="card">
       <div class="card-head">
-        <div class="card-title">Acreage Intel</div>
-        <div class="card-sub" id="acreage-disc">—</div>
+        <div class="card-title">Market Value vs Seller Asking Price</div>
+        <div class="card-sub" id="ask-disc">Ask / MV</div>
       </div>
       <div class="row">
-        <div class="row-label">Deeded acreage</div>
-        <div class="row-val"><input type="number" step="0.1" class="inline-input" id="deeded-in" value="24.5" style="width:64px"> ac</div>
+        <div class="row-label">Market Value</div>
+        <div class="row-val" id="ask-market-value">$116,000</div>
       </div>
       <div class="row">
-        <div class="row-label">LandInsight calc</div>
-        <div class="row-val"><input type="number" step="0.1" class="inline-input" id="licalc-in" value="22.8" style="width:64px"> ac</div>
+        <div class="row-label">Seller Asking Price</div>
+        <div class="row-val">
+          <span class="money-field">$<input type="number" class="signal-input" id="seller-asking-in" value="" placeholder="—" step="1000"></span>
+        </div>
       </div>
       <div class="row">
-        <div class="row-label">Variance</div>
-        <div class="row-val" id="acreage-variance">—</div>
+        <div class="row-label">Stage</div>
+        <div class="row-val" id="ask-stage">—</div>
       </div>
-      <div class="flag-note" id="flag-note"></div>
+      <div class="flag-note" id="ask-note"></div>
     </div>
 
     <!-- 5. Proximity / Lot Type -->
@@ -765,6 +758,7 @@ body {
 /* ---------- Formatters ---------- */
 const fmt = n => '$' + Math.round(n).toLocaleString();
 const fmtPPA = n => '$' + Math.round(n).toLocaleString() + '/ac';
+const SUBJECT_ACRES = 24.5;
 
 /* ---------- Subdivide Curve ---------- */
 const COEFF = 18781;
@@ -788,17 +782,6 @@ function gNet(mv, ratePct) {
   if (mv <= 0) return 0;
   const rate = ratePct / 100;
   return (1 - rate) * 100 - (2500 / mv) * 100;
-}
-
-/* ---------- Survey Flag ---------- */
-function surveyFlag(deeded, liCalc) {
-  if (deeded <= 0) return { level: 'normal', text: '' };
-  const thresholdPct = 54 * Math.pow(deeded, -0.376);
-  const minAc        = deeded * (1 - thresholdPct / 100);
-  const watchUpper   = minAc * 1.15;
-  if (liCalc >= watchUpper)  return { level: 'normal',  thresholdPct, minAc };
-  if (liCalc >= minAc)       return { level: 'watch',   thresholdPct, minAc };
-  return                            { level: 'hard',    thresholdPct, minAc };
 }
 
 /* ---------- Valuation Score (piecewise linear) ---------- */
@@ -962,26 +945,42 @@ function updateSplits(subjectAcres) {
   }
 }
 
-/* ---------- Update Acreage Intel ---------- */
-function updateAcreage() {
-  const deeded = parseFloat(document.getElementById('deeded-in').value) || 0;
-  const liCalc = parseFloat(document.getElementById('licalc-in').value) || 0;
-  const variancePct = deeded > 0 ? ((deeded - liCalc) / deeded) * 100 : 0;
-  document.getElementById('acreage-variance').textContent =
-    (variancePct >= 0 ? '−' : '+') + Math.abs(variancePct).toFixed(1) + '%  (' + (deeded - liCalc).toFixed(2) + ' ac)';
-  document.getElementById('acreage-disc').textContent = 'Deeded vs. LI calc';
-
-  const flag = surveyFlag(deeded, liCalc);
-  const note = document.getElementById('flag-note');
-  note.className = 'flag-note';
-  if (flag.level === 'hard') {
-    note.classList.add('red');
-    note.innerHTML = '<strong>⚑ Survey recommended</strong> · LI calc is below the size-adjusted threshold (' + flag.minAc.toFixed(2) + ' ac min, ' + flag.thresholdPct.toFixed(1) + '% variance allowed).';
-  } else if (flag.level === 'watch') {
-    note.classList.add('yellow');
-    note.innerHTML = '<strong>△ Watch zone</strong> · LI calc is within 15% of the survey threshold (min ' + flag.minAc.toFixed(2) + ' ac).';
+/* ---------- Market Value vs Seller Asking Stage ---------- */
+function classifyAskStage(mv, sellerAsk, maxOfferPct) {
+  if (mv <= 0 || sellerAsk <= 0) {
+    return { label: '—', cls: 'chip-neutral', pct: 0, note: 'Add a seller asking price to stage the lead.' };
   }
-  return deeded;
+
+  const askPct = sellerAsk / mv * 100;
+  const marketCeilingPct = 105;
+  const compedValuePct = 100;
+  const midpointPct = maxOfferPct + (compedValuePct - maxOfferPct) / 2;
+
+  if (askPct >= 150) return { label: 'Dead lead', cls: 'stage-dead-lead', pct: askPct, note: 'Seller ask is 150%+ of comped market value.' };
+  if (askPct > marketCeilingPct) return { label: 'Overmarket', cls: 'stage-overmarket', pct: askPct, note: 'Seller ask is above the 105% market-value ceiling.' };
+  if (askPct > compedValuePct) return { label: 'Market', cls: 'stage-market', pct: askPct, note: 'Seller ask is inside the market-value band, up to comped value plus 5%.' };
+  if (askPct > midpointPct) return { label: 'Far', cls: 'stage-far', pct: askPct, note: 'Ask sits in the higher half between max value and market value.' };
+  if (askPct > maxOfferPct) return { label: 'Close', cls: 'stage-close', pct: askPct, note: 'Ask sits in the lower half between max value and market value.' };
+  if (askPct > 50) return { label: 'Warm', cls: 'stage-warm', pct: askPct, note: 'Ask is above 50% of MV but inside the max-offer band.' };
+  return { label: 'Hot', cls: 'stage-hot', pct: askPct, note: 'Ask is 50% of MV or lower.' };
+}
+
+function updateAskStage(mv, maxOfferPct) {
+  const sellerAsk = parseFloat(document.getElementById('seller-asking-in').value) || 0;
+  const stage = classifyAskStage(mv, sellerAsk, maxOfferPct);
+  const stageEl = document.getElementById('ask-stage');
+  const note = document.getElementById('ask-note');
+
+  document.getElementById('ask-market-value').textContent = fmt(mv);
+  document.getElementById('ask-disc').textContent = sellerAsk > 0 && mv > 0 ? (sellerAsk / mv * 100).toFixed(1) + '% of MV' : 'Ask / MV';
+  stageEl.innerHTML = stage.label === '—'
+    ? '—'
+    : '<span class="chip stage-chip ' + stage.cls + '">' + stage.label + '</span>';
+  note.className = 'flag-note';
+  if (stage.label === 'Overmarket' || stage.label === 'Dead lead') note.classList.add('red');
+  else if (stage.label !== '—') note.classList.add('yellow');
+  note.style.display = 'block';
+  note.textContent = stage.note;
 }
 
 /* ---------- Update Valuation Scores ---------- */
@@ -1016,7 +1015,7 @@ function updateSubdivideBanner() {
 function updateMoney() {
   const mv    = parseFloat(document.getElementById('mv-input').value)   || 0;
   const rate  = parseFloat(document.getElementById('rate-input').value) || 3;
-  const acres = parseFloat(document.getElementById('deeded-in').value)  || 0;
+  const acres = SUBJECT_ACRES;
 
   // Market anchor
   document.getElementById('b-total').textContent = fmt(mv);
@@ -1037,11 +1036,12 @@ function updateMoney() {
 
   // Scores
   updateScores(mv);
+  updateAskStage(mv, fPct);
 }
 
 /* ---------- Acreage-driven trend line (independent of MV) ---------- */
 function updateTrend() {
-  const acres = parseFloat(document.getElementById('deeded-in').value) || 0;
+  const acres = SUBJECT_ACRES;
   if (acres > 0) {
     buildChart(acres);
     updateSplits(acres);
@@ -1050,7 +1050,6 @@ function updateTrend() {
 
 /* ---------- Full refresh (init + acreage changes only) ---------- */
 function updateAll() {
-  updateAcreage();   // variance % + survey flag
   updateMoney();     // MV-dependent dollar math + scores
   updateTrend();     // acreage-driven curve + splits
 }
@@ -1106,9 +1105,7 @@ document.getElementById('mlv-in').addEventListener('input', () => { updateMoney(
 // Source figure + target ratio recompute the sourced baseline only
 mvSourceField.addEventListener('change', () => { updateSourceUI(); refreshSourced(); });
 mvRatio.addEventListener('input', refreshSourced);
-// Acreage changes recompute everything, including the trend line
-document.getElementById('deeded-in').addEventListener('input', updateAll);
-document.getElementById('licalc-in').addEventListener('input', updateAll);
+document.getElementById('seller-asking-in').addEventListener('input', updateMoney);
 document.getElementById('proximity-select').addEventListener('change', renderProximity);
 
 /* ---------- Follow Up Boss embed: auto-fill MV from the Deal ---------- */
@@ -1119,22 +1116,6 @@ function ensureFubOption() {
     opt.textContent = 'Follow Up Boss (Price)';
     mvSourceField.insertBefore(opt, mvSourceField.firstChild);
   }
-}
-
-function setSellerMotivation(value) {
-  if (!value) return;
-  const select = document.getElementById('seller-motivation-select');
-  const normalized = String(value).trim().toLowerCase();
-  const match = Array.from(select.options).find(opt => opt.value.toLowerCase() === normalized);
-  if (match) {
-    select.value = match.value;
-    return;
-  }
-  const opt = document.createElement('option');
-  opt.value = value;
-  opt.textContent = value;
-  select.appendChild(opt);
-  select.value = value;
 }
 
 async function initFubEmbed() {
@@ -1162,7 +1143,6 @@ async function initFubEmbed() {
     if (d.assessedValue   != null) document.getElementById('av-in').value  = d.assessedValue;
     if (d.marketLandValue != null) document.getElementById('mlv-in').value = d.marketLandValue;
     if (d.sellerAskingPrice != null) document.getElementById('seller-asking-in').value = Math.round(d.sellerAskingPrice);
-    if (d.sellerMotivation) setSellerMotivation(d.sellerMotivation);
 
     // APN + mail location → header
     const apnEl = document.getElementById('parcel-id');
@@ -1187,7 +1167,6 @@ async function initFubEmbed() {
     if (d.apn)                     got.push('APN');
     if (d.liLink)                  got.push('Land Insights link');
     if (d.sellerAskingPrice != null) got.push('Seller asking');
-    if (d.sellerMotivation)        got.push('Motivation');
     mvFubStatus.textContent = '● Connected to Follow Up Boss' + who +
       (got.length ? ' — pulled ' + got.join(' · ') : ' — no parcel fields populated yet; using LandInsight default');
   } catch (e) {

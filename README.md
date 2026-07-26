@@ -40,8 +40,8 @@ FUB person page ──(?context&signature)──► server.js
    1. verify HMAC-SHA256(context, FUB_EMBED_SECRET) === signature
    2. decode context → person.id
    3. GET /v1/people/{id}?fields=allFields   (Basic auth w/ FUB_API_KEY)
-   4. read Price + parcel custom fields (Assessed Land Value, Market Land Value, APN, Mail State/County, Parcel Link, Seller Asking Price, Seller Motivation)
-   5. return JSON → dashboard auto-fills MV, AV, MLV, APN, location, Land Insights link, seller asking price, and motivation
+   4. read Price + parcel custom fields (Assessed Land Value, Market Land Value, APN, Mail State/County, Parcel Link, Seller Asking Price)
+   5. return JSON → dashboard auto-fills MV, AV, MLV, APN, location, Land Insights link, and seller asking price
 ```
 
 The signed context only contains the person/account; the Person record (with its
@@ -55,15 +55,15 @@ vars, never in the page.
    `FUB_EMBED_SECRET`.
 2. **Generate an API key**: FUB → Admin → API → create key → `FUB_API_KEY`.
 3. **Create Person custom fields** (Admin → Custom Fields): Assessed Land Value,
-   Market Land Value, APN, Mail State, Mail County, Parcel Link, Seller Asking Price,
-   Seller Motivation. Discover their keys via
+   Market Land Value, APN, Mail State, Mail County, Parcel Link, and Seller Asking Price.
+   Discover their keys via
    `https://<your-app>.onrender.com/api/fub/personfields?personId=<id>` and set the
    `FUB_FIELD_*` env vars to match. Market Value uses the built-in `price`.
    Do not map ACE/survey fields into the pricing dashboard.
 4. Set those env vars on Render and deploy.
 5. Open a contact in FUB → the dashboard pre-fills Market Value, Assessed / Market
-   Land Value, APN, location, the Land Insights link, seller asking price, and seller
-   motivation. A green status line confirms which fields were pulled.
+   Land Value, APN, location, the Land Insights link, and seller asking price. A green
+   status line confirms which fields were pulled.
 
 ### Environment variables
 
@@ -78,7 +78,6 @@ vars, never in the page.
 | `FUB_FIELD_MAIL_STATE` / `_MAIL_COUNTY` | no | `customMail…` | "Mail State" / "Mail County" → header location |
 | `FUB_FIELD_LI_LINK` | no | `customParcelLink` | FUB "Parcel Link" → Land Insights URL |
 | `FUB_FIELD_SELLER_ASKING` | no | `customSellerAskingPrice` | Seller asking price from Smarter Contact/FUB |
-| `FUB_FIELD_SELLER_MOTIVATION` | no | `customSellerMotivation` | Seller motivation: Extremely motivated, Motivated, Semi-Motivated, Unmotivated, Mad |
 | `PORT` | no | `8080` | Set automatically by Render |
 
 See `.env.example`. Health/config check: `GET /api/health`.

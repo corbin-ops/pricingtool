@@ -52,7 +52,7 @@ Originally rebuilt from a spec export (`DewClaw_Dashboard_Conversation_Export.md
 
 **Layout:** "Brief" two-column grid — `grid-template-columns: 5fr 7fr`.
 
-- **Left (5fr):** Seller Signals · Owner Proximity · Valuation Score (dual rings) · Acreage Intel · Lot Type
+- **Left (5fr):** Seller Signals · Valuation Score (dual rings) · Market Value vs Seller Asking Price · Lot Type
 - **Right (7fr):** Price Pulse / Subdivide Curve · **Input Market Value** · Market Anchor
 
 Single self-contained HTML file: Chart.js via CDN, vanilla JS, no framework, all state in the DOM.
@@ -77,7 +77,8 @@ Single self-contained HTML file: Chart.js via CDN, vanilla JS, no framework, all
 | 12 | "Where does the dashboard get its data — all from FUB?" | Confirmed: **all from the Person record**. Added `/api/fub/parcel` (fetch person `fields=allFields`, env-configurable field keys) → auto-fills MV (Person `price`), AV, MLV, APN, location, LI link. MV source decided = Person `price`. |
 | 13 | Mapped fields to real FUB names; dropped owner proximity. | `Assessed Value` ← FUB **Assessed Land Value** (`customAssessedLandValue`); property location ← FUB **Mail State/County** (`customMailState`/`customMailCounty`). Removed the **Owner Proximity** card + comparison and the owner-address fetch (no separate owner-location data). Relabeled the dashboard row to "Assessed Land Value". |
 | 14 | LI Link field is actually named **"Parcel Link"** in FUB. | `FUB_FIELD_LI_LINK` value/default → `customParcelLink` (URL form `https://app.landinsights.co/data?parcel=<id>`). Env-var key name unchanged. |
-| 15 | Pricing tool / CRM custom fields. | Added Smarter Contact/FUB alias mapping, normalized Parcel Link into a proper **Land Insights** URL, added **Seller Asking Price** + **Seller Motivation** (`Extremely motivated`, `Motivated`, `Semi-Motivated`, `Unmotivated`, `Mad`), and intentionally left ACE/survey CRM fields out of the pricing payload. |
+| 15 | Pricing tool / CRM custom fields. | Added Smarter Contact/FUB alias mapping, normalized Parcel Link into a proper **Land Insights** URL, added **Seller Asking Price**, and intentionally left ACE/survey CRM fields out of the pricing payload. |
+| 16 | Replace Acreage Intel with Market Value vs Seller Asking Price and remove Seller Motivation. | Replaced the Acreage Intel card with **Market Value vs Seller Asking Price**. The card now shows MV, editable Seller Asking Price, and a computed stage: Hot, Warm, Close, Far, Market, Overmarket, or Dead lead. Removed Seller Motivation from the UI, env sample, README, and FUB response payload. |
 
 ---
 
@@ -111,7 +112,7 @@ fub-embed-integration  (branched from 8b6bd40)
 ### Left column
 - **Seller Signals** — tax delinquent (chip), back taxes, annual tax, family transfer, ownership length.
 - **Valuation Score (dual)** — editable Assessed Value + Market Land Value inputs; each gets a 0–10 score **ring**, % of MV, and verdict text. Scored via piecewise curve ([§6](#6-all-formulas)).
-- **Acreage Intel** — editable deeded + LandInsight-calc acreage; variance %; **survey flag** (Normal / Watch △ / Hard ⚑).
+- **Market Value vs Seller Asking Price** — MV, editable Seller Asking Price, and stage based on Seller Ask / MV: Hot (≤50%), Warm (50.1% to max offer), Close/Far (between max offer and comped MV), Market (100–105%), Overmarket (105.1–150%), Dead lead (150%+).
 - **Lot Type** — dropdown of 11 types in 4 groups; shows description + colored tag chips.
 
 ### Right column

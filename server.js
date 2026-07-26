@@ -39,8 +39,7 @@ const F = {
   mailState:       process.env.FUB_FIELD_MAIL_STATE   || 'customMailState',
   mailCounty:      process.env.FUB_FIELD_MAIL_COUNTY  || 'customMailCounty',
   liLink:          process.env.FUB_FIELD_LI_LINK      || 'customParcelLink', // FUB "Parcel Link"
-  sellerAsking:    process.env.FUB_FIELD_SELLER_ASKING || 'customSellerAskingPrice',
-  sellerMotivation: process.env.FUB_FIELD_SELLER_MOTIVATION || 'customSellerMotivation'
+  sellerAsking:    process.env.FUB_FIELD_SELLER_ASKING || 'customSellerAskingPrice'
 };
 
 // Smarter Contact imports can create slightly different FUB custom-field keys.
@@ -67,12 +66,6 @@ const FIELD_ALIASES = {
     'customAskingPrice',
     'customAskPrice',
     'customSellerPrice'
-  ],
-  sellerMotivation: [
-    'customSellerMotivation',
-    'customMotivation',
-    'customMotivationLevel',
-    'customSellerMotivationLevel'
   ]
 };
 
@@ -170,21 +163,6 @@ function normalizeLandInsightsLink(value) {
   return raw;
 }
 
-function normalizeSellerMotivation(value) {
-  if (value == null || value === '') return null;
-  const clean = String(value).trim().toLowerCase().replace(/[_\s]+/g, '-');
-  const options = {
-    'extremely-motivated': 'Extremely motivated',
-    'very-motivated': 'Extremely motivated',
-    motivated: 'Motivated',
-    'semi-motivated': 'Semi-Motivated',
-    semimotivated: 'Semi-Motivated',
-    unmotivated: 'Unmotivated',
-    mad: 'Mad'
-  };
-  return options[clean] || String(value).trim();
-}
-
 // ---------- API: embed deal lookup ----------
 app.get('/api/fub/deal', async (req, res) => {
   const { context, signature } = req.query;
@@ -261,7 +239,6 @@ app.get('/api/fub/parcel', async (req, res) => {
       mailCounty:      picked.mailCounty.value || null,
       liLink:          normalizeLandInsightsLink(picked.liLink.value),
       sellerAskingPrice: toNumber(picked.sellerAsking.value),
-      sellerMotivation: normalizeSellerMotivation(picked.sellerMotivation.value),
       fieldsUsed:      Object.fromEntries(Object.entries(picked).map(([name, hit]) => [name, hit.key || F[name]]))
     });
   } catch (e) {
