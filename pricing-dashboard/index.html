@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DewClaw Land Holdings — Pricing Dashboard</title>
+<link rel="icon" type="image/svg+xml" href="assets/logo-icon.svg">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script type="text/javascript" src="https://eia.followupboss.com/embeddedApps-v1.0.1.js"></script>
 <style>
 :root {
   --color-background-primary:   #ffffff;
@@ -54,9 +56,11 @@ body {
 }
 .brand {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
+  align-items: center;
+  gap: 11px;
 }
+.brand-logo { display: block; flex-shrink: 0; }
+.brand-text { display: flex; flex-direction: column; line-height: 1.15; }
 .brand-mark {
   font-weight: 700;
   font-size: 16px;
@@ -77,6 +81,41 @@ body {
   padding: 5px 10px;
   border-radius: var(--border-radius-md);
   border: 1px solid var(--color-border-tertiary);
+}
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.li-link {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-accent);
+  text-decoration: none;
+  padding: 5px 9px;
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-border-tertiary);
+  white-space: nowrap;
+}
+.li-link:hover { background: var(--color-accent-soft); }
+.li-link[hidden] { display: none; }
+
+.signal-input {
+  width: 150px;
+  max-width: 100%;
+  background: var(--color-background-secondary);
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md);
+  padding: 5px 8px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--color-text-primary);
+}
+.money-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-text-secondary);
+}
+.money-field .signal-input {
+  width: 118px;
+  font-weight: 600;
 }
 
 /* ---------- Grid Layout ---------- */
@@ -278,6 +317,15 @@ body {
 }
 .mv-source-eq { margin-left: auto; color: var(--color-text-secondary); }
 .mv-source-eq strong { color: var(--color-text-primary); font-size: 13px; }
+.mv-fub-status {
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: var(--border-radius-md);
+}
+.mv-fub-status.ok  { background: var(--color-background-success); color: var(--color-text-success); }
+.mv-fub-status.err { background: var(--color-background-danger);  color: var(--color-text-danger);  }
 
 /* ---------- Market Anchor 2×2 ---------- */
 .anchor-grid {
@@ -430,6 +478,18 @@ body {
 .flag-note.yellow { background: var(--color-background-warning); color: var(--color-text-warning); display: block; }
 .flag-note.red { background: var(--color-background-danger); color: var(--color-text-danger); display: block; }
 
+.stage-chip {
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.stage-hot { background: var(--color-background-danger); color: var(--color-text-danger); }
+.stage-warm { background: var(--color-background-warning); color: var(--color-text-warning); }
+.stage-close { background: var(--color-background-success); color: var(--color-text-success); }
+.stage-far { background: var(--color-background-info); color: var(--color-text-info); }
+.stage-market { background: var(--color-background-tertiary); color: var(--color-text-secondary); }
+.stage-overmarket,
+.stage-dead-lead { background: var(--color-background-danger); color: var(--color-text-danger); }
+
 /* small helpers */
 .muted { color: var(--color-text-tertiary); }
 .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
@@ -450,10 +510,21 @@ body {
 
 <div class="topbar">
   <div class="brand">
-    <div class="brand-mark">DewClaw Land Holdings</div>
-    <div class="brand-sub">Pricing Dashboard</div>
+    <svg class="brand-logo" width="34" height="34" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" aria-label="DewClaw Pricing Tool">
+      <rect width="96" height="96" rx="22" fill="#534AB7"/>
+      <line x1="22" y1="72" x2="76" y2="72" stroke="#ffffff" stroke-opacity="0.35" stroke-width="3" stroke-linecap="round"/>
+      <path d="M22 36 C34 60 50 64 76 62" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="42" cy="57" r="7.5" fill="#D85A30" stroke="#534AB7" stroke-width="3"/>
+    </svg>
+    <div class="brand-text">
+      <div class="brand-mark">DewClaw Land Holdings</div>
+      <div class="brand-sub">Pricing Dashboard</div>
+    </div>
   </div>
-  <div class="parcel-id">APN 074-218-031 · Bandera County, TX</div>
+  <div class="topbar-right">
+    <div class="parcel-id" id="parcel-id">APN 074-218-031 · Bandera County, TX</div>
+    <a id="li-link" class="li-link" href="#" target="_blank" rel="noopener" hidden>Land Insights ↗</a>
+  </div>
 </div>
 
 <div class="dashboard">
@@ -489,23 +560,7 @@ body {
       </div>
     </div>
 
-    <!-- 2. Owner Proximity -->
-    <div class="card">
-      <div class="card-head">
-        <div class="card-title">Owner Proximity</div>
-        <div class="card-sub">Mail: Los Angeles, CA</div>
-      </div>
-      <div class="row">
-        <div class="row-label">State match</div>
-        <div class="row-val"><span class="chip chip-danger">Out of state</span></div>
-      </div>
-      <div class="row">
-        <div class="row-label">County match</div>
-        <div class="row-val"><span class="chip chip-warning">Out of county</span></div>
-      </div>
-    </div>
-
-    <!-- 3. Valuation Score (DUAL) -->
+    <!-- 2. Valuation Score (DUAL) -->
     <div class="card">
       <div class="card-head">
         <div class="card-title">Valuation Score</div>
@@ -514,7 +569,7 @@ body {
 
       <div class="score-row">
         <div class="left">
-          <label>Assessed Value</label>
+          <label>Assessed Land Value</label>
           <div class="score-input-wrap">
             <span class="muted">$</span>
             <input type="number" class="score-input" id="av-in" value="42000">
@@ -539,25 +594,27 @@ body {
       </div>
     </div>
 
-    <!-- 4. Acreage Intel -->
+    <!-- 4. Market Value vs Seller Asking Price -->
     <div class="card">
       <div class="card-head">
-        <div class="card-title">Acreage Intel</div>
-        <div class="card-sub" id="acreage-disc">—</div>
+        <div class="card-title">Market Value vs Seller Asking Price</div>
+        <div class="card-sub" id="ask-disc">Ask / MV</div>
       </div>
       <div class="row">
-        <div class="row-label">Deeded acreage</div>
-        <div class="row-val"><input type="number" step="0.1" class="inline-input" id="deeded-in" value="24.5" style="width:64px"> ac</div>
+        <div class="row-label">Market Value</div>
+        <div class="row-val" id="ask-market-value">$116,000</div>
       </div>
       <div class="row">
-        <div class="row-label">LandInsight calc</div>
-        <div class="row-val"><input type="number" step="0.1" class="inline-input" id="licalc-in" value="22.8" style="width:64px"> ac</div>
+        <div class="row-label">Seller Asking Price</div>
+        <div class="row-val">
+          <span class="money-field">$<input type="number" class="signal-input" id="seller-asking-in" value="" placeholder="—" step="1000"></span>
+        </div>
       </div>
       <div class="row">
-        <div class="row-label">Variance</div>
-        <div class="row-val" id="acreage-variance">—</div>
+        <div class="row-label">Stage</div>
+        <div class="row-val" id="ask-stage">—</div>
       </div>
-      <div class="flag-note" id="flag-note"></div>
+      <div class="flag-note" id="ask-note"></div>
     </div>
 
     <!-- 5. Proximity / Lot Type -->
@@ -650,12 +707,11 @@ body {
           <option value="mlv" selected>Market Land Value</option>
           <option value="av">Assessed Value</option>
         </select>
-        <span>at</span>
-        <input type="number" id="mv-ratio" class="mv-ratio-input" value="50" step="1" min="1" max="100">
-        <span>% of MV</span>
+        <span id="mv-ratio-controls">at <input type="number" id="mv-ratio" class="mv-ratio-input" value="50" step="1" min="1" max="100">% of MV</span>
         <span class="mv-source-eq">→ <strong id="mv-sourced">$116,000</strong></span>
       </div>
-      <div class="mv-hint">MV is sourced from the LandInsight figure ÷ your target ratio (50% = the valuation sweet spot). Edit freely for what-if pricing; <em>Revert</em> restores the sourced figure. The subdivide trend line is acreage-based and is never affected by MV.</div>
+      <div class="mv-fub-status" id="mv-fub-status" hidden></div>
+      <div class="mv-hint">MV is sourced from the Follow Up Boss deal when embedded, otherwise from the LandInsight figure ÷ your target ratio (50% = the valuation sweet spot). Edit freely for what-if pricing; <em>Revert</em> restores the sourced figure. The subdivide trend line is acreage-based and is never affected by MV.</div>
     </div>
 
     <!-- 3. Market Anchor -->
@@ -702,6 +758,7 @@ body {
 /* ---------- Formatters ---------- */
 const fmt = n => '$' + Math.round(n).toLocaleString();
 const fmtPPA = n => '$' + Math.round(n).toLocaleString() + '/ac';
+const SUBJECT_ACRES = 24.5;
 
 /* ---------- Subdivide Curve ---------- */
 const COEFF = 18781;
@@ -725,17 +782,6 @@ function gNet(mv, ratePct) {
   if (mv <= 0) return 0;
   const rate = ratePct / 100;
   return (1 - rate) * 100 - (2500 / mv) * 100;
-}
-
-/* ---------- Survey Flag ---------- */
-function surveyFlag(deeded, liCalc) {
-  if (deeded <= 0) return { level: 'normal', text: '' };
-  const thresholdPct = 54 * Math.pow(deeded, -0.376);
-  const minAc        = deeded * (1 - thresholdPct / 100);
-  const watchUpper   = minAc * 1.15;
-  if (liCalc >= watchUpper)  return { level: 'normal',  thresholdPct, minAc };
-  if (liCalc >= minAc)       return { level: 'watch',   thresholdPct, minAc };
-  return                            { level: 'hard',    thresholdPct, minAc };
 }
 
 /* ---------- Valuation Score (piecewise linear) ---------- */
@@ -899,26 +945,42 @@ function updateSplits(subjectAcres) {
   }
 }
 
-/* ---------- Update Acreage Intel ---------- */
-function updateAcreage() {
-  const deeded = parseFloat(document.getElementById('deeded-in').value) || 0;
-  const liCalc = parseFloat(document.getElementById('licalc-in').value) || 0;
-  const variancePct = deeded > 0 ? ((deeded - liCalc) / deeded) * 100 : 0;
-  document.getElementById('acreage-variance').textContent =
-    (variancePct >= 0 ? '−' : '+') + Math.abs(variancePct).toFixed(1) + '%  (' + (deeded - liCalc).toFixed(2) + ' ac)';
-  document.getElementById('acreage-disc').textContent = 'Deeded vs. LI calc';
-
-  const flag = surveyFlag(deeded, liCalc);
-  const note = document.getElementById('flag-note');
-  note.className = 'flag-note';
-  if (flag.level === 'hard') {
-    note.classList.add('red');
-    note.innerHTML = '<strong>⚑ Survey recommended</strong> · LI calc is below the size-adjusted threshold (' + flag.minAc.toFixed(2) + ' ac min, ' + flag.thresholdPct.toFixed(1) + '% variance allowed).';
-  } else if (flag.level === 'watch') {
-    note.classList.add('yellow');
-    note.innerHTML = '<strong>△ Watch zone</strong> · LI calc is within 15% of the survey threshold (min ' + flag.minAc.toFixed(2) + ' ac).';
+/* ---------- Market Value vs Seller Asking Stage ---------- */
+function classifyAskStage(mv, sellerAsk, maxOfferPct) {
+  if (mv <= 0 || sellerAsk <= 0) {
+    return { label: '—', cls: 'chip-neutral', pct: 0, note: 'Add a seller asking price to stage the lead.' };
   }
-  return deeded;
+
+  const askPct = sellerAsk / mv * 100;
+  const marketCeilingPct = 105;
+  const compedValuePct = 100;
+  const midpointPct = maxOfferPct + (compedValuePct - maxOfferPct) / 2;
+
+  if (askPct >= 150) return { label: 'Dead lead', cls: 'stage-dead-lead', pct: askPct, note: 'Seller ask is 150%+ of comped market value.' };
+  if (askPct > marketCeilingPct) return { label: 'Overmarket', cls: 'stage-overmarket', pct: askPct, note: 'Seller ask is above the 105% market-value ceiling.' };
+  if (askPct > compedValuePct) return { label: 'Market', cls: 'stage-market', pct: askPct, note: 'Seller ask is inside the market-value band, up to comped value plus 5%.' };
+  if (askPct > midpointPct) return { label: 'Far', cls: 'stage-far', pct: askPct, note: 'Ask sits in the higher half between max value and market value.' };
+  if (askPct > maxOfferPct) return { label: 'Close', cls: 'stage-close', pct: askPct, note: 'Ask sits in the lower half between max value and market value.' };
+  if (askPct > 50) return { label: 'Warm', cls: 'stage-warm', pct: askPct, note: 'Ask is above 50% of MV but inside the max-offer band.' };
+  return { label: 'Hot', cls: 'stage-hot', pct: askPct, note: 'Ask is 50% of MV or lower.' };
+}
+
+function updateAskStage(mv, maxOfferPct) {
+  const sellerAsk = parseFloat(document.getElementById('seller-asking-in').value) || 0;
+  const stage = classifyAskStage(mv, sellerAsk, maxOfferPct);
+  const stageEl = document.getElementById('ask-stage');
+  const note = document.getElementById('ask-note');
+
+  document.getElementById('ask-market-value').textContent = fmt(mv);
+  document.getElementById('ask-disc').textContent = sellerAsk > 0 && mv > 0 ? (sellerAsk / mv * 100).toFixed(1) + '% of MV' : 'Ask / MV';
+  stageEl.innerHTML = stage.label === '—'
+    ? '—'
+    : '<span class="chip stage-chip ' + stage.cls + '">' + stage.label + '</span>';
+  note.className = 'flag-note';
+  if (stage.label === 'Overmarket' || stage.label === 'Dead lead') note.classList.add('red');
+  else if (stage.label !== '—') note.classList.add('yellow');
+  note.style.display = 'block';
+  note.textContent = stage.note;
 }
 
 /* ---------- Update Valuation Scores ---------- */
@@ -953,7 +1015,7 @@ function updateSubdivideBanner() {
 function updateMoney() {
   const mv    = parseFloat(document.getElementById('mv-input').value)   || 0;
   const rate  = parseFloat(document.getElementById('rate-input').value) || 3;
-  const acres = parseFloat(document.getElementById('deeded-in').value)  || 0;
+  const acres = SUBJECT_ACRES;
 
   // Market anchor
   document.getElementById('b-total').textContent = fmt(mv);
@@ -974,11 +1036,12 @@ function updateMoney() {
 
   // Scores
   updateScores(mv);
+  updateAskStage(mv, fPct);
 }
 
 /* ---------- Acreage-driven trend line (independent of MV) ---------- */
 function updateTrend() {
-  const acres = parseFloat(document.getElementById('deeded-in').value) || 0;
+  const acres = SUBJECT_ACRES;
   if (acres > 0) {
     buildChart(acres);
     updateSplits(acres);
@@ -987,25 +1050,34 @@ function updateTrend() {
 
 /* ---------- Full refresh (init + acreage changes only) ---------- */
 function updateAll() {
-  updateAcreage();   // variance % + survey flag
   updateMoney();     // MV-dependent dollar math + scores
   updateTrend();     // acreage-driven curve + splits
 }
 
-/* ---------- MV sourced from LandInsight figures ---------- */
+/* ---------- MV sourcing: Follow Up Boss deal (primary) → LandInsight (fallback) ---------- */
 const mvInput       = document.getElementById('mv-input');
 const mvRevert      = document.getElementById('mv-revert');
 const mvSourceField = document.getElementById('mv-source-field');
 const mvRatio       = document.getElementById('mv-ratio');
 const mvSourcedEl   = document.getElementById('mv-sourced');
+const mvRatioCtrls  = document.getElementById('mv-ratio-controls');
+const mvFubStatus   = document.getElementById('mv-fub-status');
 
-// MV = (selected LandInsight figure) ÷ (target ratio).  Default: Market Land Value at 50% of MV.
+let fubSourcedMV = null;   // set when embedded in Follow Up Boss and a deal value is found
+
+// Sourced MV: the FUB deal value when that source is active, else LandInsight figure ÷ target ratio.
 function computeSourcedMV() {
+  if (mvSourceField.value === 'fub') return fubSourcedMV || 0;
   const av    = parseFloat(document.getElementById('av-in').value)  || 0;
   const mlv   = parseFloat(document.getElementById('mlv-in').value) || 0;
   const base  = mvSourceField.value === 'av' ? av : mlv;
   const ratio = (parseFloat(mvRatio.value) || 0) / 100;
   return ratio > 0 ? base / ratio : 0;
+}
+
+// The ratio controls only apply to LandInsight sourcing — hide them for the FUB source.
+function updateSourceUI() {
+  mvRatioCtrls.style.display = (mvSourceField.value === 'fub') ? 'none' : '';
 }
 
 // Refresh the sourced display + toggle the Revert button (shown when MV diverges from source)
@@ -1016,7 +1088,7 @@ function refreshSourced() {
   return sourced;
 }
 
-// Revert restores MV to the current LandInsight-sourced value — trend line left untouched
+// Revert restores MV to the current sourced value — trend line left untouched
 mvRevert.addEventListener('click', () => {
   mvInput.value = String(Math.round(computeSourcedMV()));
   updateMoney();
@@ -1031,19 +1103,87 @@ document.getElementById('rate-input').addEventListener('input', updateMoney);
 document.getElementById('av-in').addEventListener('input',  () => { updateMoney(); refreshSourced(); });
 document.getElementById('mlv-in').addEventListener('input', () => { updateMoney(); refreshSourced(); });
 // Source figure + target ratio recompute the sourced baseline only
-mvSourceField.addEventListener('change', refreshSourced);
+mvSourceField.addEventListener('change', () => { updateSourceUI(); refreshSourced(); });
 mvRatio.addEventListener('input', refreshSourced);
-// Acreage changes recompute everything, including the trend line
-document.getElementById('deeded-in').addEventListener('input', updateAll);
-document.getElementById('licalc-in').addEventListener('input', updateAll);
+document.getElementById('seller-asking-in').addEventListener('input', updateMoney);
 document.getElementById('proximity-select').addEventListener('change', renderProximity);
+
+/* ---------- Follow Up Boss embed: auto-fill MV from the Deal ---------- */
+function ensureFubOption() {
+  if (!mvSourceField.querySelector('option[value="fub"]')) {
+    const opt = document.createElement('option');
+    opt.value = 'fub';
+    opt.textContent = 'Follow Up Boss (Price)';
+    mvSourceField.insertBefore(opt, mvSourceField.firstChild);
+  }
+}
+
+async function initFubEmbed() {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.get('context') || !params.get('signature')) return;  // not embedded — keep LandInsight
+
+  try {
+    const res = await fetch('/api/fub/parcel' + window.location.search, { headers: { Accept: 'application/json' } });
+    const d   = await res.json();
+    if (!res.ok || !d.ok) throw new Error(d.error || ('HTTP ' + res.status));
+
+    const who = d.personName ? ' · ' + d.personName : '';
+    mvFubStatus.hidden = false;
+    mvFubStatus.className = 'mv-fub-status ok';
+
+    // Market Value ← Person "Price" → primary source
+    if (d.marketValue != null) {
+      ensureFubOption();
+      fubSourcedMV = d.marketValue;
+      mvSourceField.value = 'fub';
+      mvInput.value = String(Math.round(fubSourcedMV));
+      updateSourceUI();
+    }
+    // Assessed Value / Market Land Value → valuation score inputs
+    if (d.assessedValue   != null) document.getElementById('av-in').value  = d.assessedValue;
+    if (d.marketLandValue != null) document.getElementById('mlv-in').value = d.marketLandValue;
+    if (d.sellerAskingPrice != null) document.getElementById('seller-asking-in').value = Math.round(d.sellerAskingPrice);
+
+    // APN + mail location → header
+    const apnEl = document.getElementById('parcel-id');
+    if (apnEl && (d.apn || d.mailState || d.mailCounty)) {
+      const loc = [d.mailCounty ? d.mailCounty + ' County' : null, d.mailState].filter(Boolean).join(', ');
+      apnEl.textContent = (d.apn ? 'APN ' + d.apn : 'APN —') + (loc ? ' · ' + loc : '');
+    }
+    // LandInsight link
+    if (d.liLink) {
+      const li = document.getElementById('li-link');
+      if (li) { li.href = d.liLink; li.hidden = false; }
+    }
+
+    // Recompute money + scores from the pulled values
+    updateMoney();
+    refreshSourced();
+
+    const got = [];
+    if (d.marketValue != null)     got.push('MV');
+    if (d.assessedValue != null)   got.push('AV');
+    if (d.marketLandValue != null) got.push('MLV');
+    if (d.apn)                     got.push('APN');
+    if (d.liLink)                  got.push('Land Insights link');
+    if (d.sellerAskingPrice != null) got.push('Seller asking');
+    mvFubStatus.textContent = '● Connected to Follow Up Boss' + who +
+      (got.length ? ' — pulled ' + got.join(' · ') : ' — no parcel fields populated yet; using LandInsight default');
+  } catch (e) {
+    mvFubStatus.hidden = false;
+    mvFubStatus.className = 'mv-fub-status err';
+    mvFubStatus.textContent = '● Follow Up Boss connection failed: ' + e.message + ' — using LandInsight default';
+  }
+}
 
 /* ---------- Initial Render ---------- */
 updateSubdivideBanner();
 renderProximity();
+updateSourceUI();
 mvInput.value = String(Math.round(computeSourcedMV()));  // seed MV from LandInsight on load
 updateAll();
 refreshSourced();
+initFubEmbed();   // when embedded in FUB, pull parcel fields from the Person record
 </script>
 
 </body>
